@@ -1,5 +1,14 @@
 // ========================== Setup =============================
-`define CPU_RESET_VECTOR 32'h20000000
+`define CPU_RESET_VECTOR 32'h10000000
+
+// ========================== Devices ===========================
+`define DEVICE_COUNT			5
+
+`define DEV_UARTRW				4
+`define DEV_UARTBYTEAVAILABLE	3
+`define DEV_UARTSENDFIFOFULL	2
+`define DEV_SRAM				1
+`define DEV_DDR3				0
 
 // ======================== RV32 I ==============================
 //       			[6:0]		[14:12] [31:25] [24:20]

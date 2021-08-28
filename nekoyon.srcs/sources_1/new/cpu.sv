@@ -29,7 +29,6 @@ assign busdata = (|buswe) ? dataout : 32'dz;
 logic [31:0] PC;
 logic [31:0] nextPC;
 logic [31:0] instruction;
-localparam RESETVECTOR = 32'h10000000; // Top of S-RAM
 
 // -----------------------------------------------------------------------
 // Decoder
@@ -146,8 +145,8 @@ always @(posedge clock or posedge reset) begin
 		case (1'b1)
 
 			cpumode[CPU_RESET]: begin
-				PC <= RESETVECTOR;
-				nextPC <= RESETVECTOR;
+				PC <= `CPU_RESET_VECTOR;
+				nextPC <= `CPU_RESET_VECTOR;
 				cpumode[CPU_RETIRE] <= 1'b1;
 			end
 
