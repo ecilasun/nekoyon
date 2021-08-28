@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="simtop_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="simtop" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
+      <ZoomEndTime time="212.800001 us"></ZoomEndTime>
+      <Cursor1Time time="33.985000 us"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="201"></NameColumnWidth>
+      <ValueColumnWidth column_width="97"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="67" />
+   <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
+      <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
+      <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider233" type="divider">
+      <obj_property name="label">top</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/wallclock">
+      <obj_property name="ElementShortName">wallclock</obj_property>
+      <obj_property name="ObjectShortName">wallclock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/cpuclock">
+      <obj_property name="ElementShortName">cpuclock</obj_property>
+      <obj_property name="ObjectShortName">cpuclock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider242" type="divider">
+      <obj_property name="label">sysbus</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/cpuclock">
+      <obj_property name="ElementShortName">cpuclock</obj_property>
+      <obj_property name="ObjectShortName">cpuclock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/resetn">
+      <obj_property name="ElementShortName">resetn</obj_property>
+      <obj_property name="ObjectShortName">resetn</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/busmode">
+      <obj_property name="ElementShortName">busmode[3:0]</obj_property>
+      <obj_property name="ObjectShortName">busmode[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/businitialized">
+      <obj_property name="ElementShortName">businitialized</obj_property>
+      <obj_property name="ObjectShortName">businitialized</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/busbusy">
+      <obj_property name="ElementShortName">busbusy</obj_property>
+      <obj_property name="ObjectShortName">busbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/busactive">
+      <obj_property name="ElementShortName">busactive</obj_property>
+      <obj_property name="ObjectShortName">busactive</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/busaddress">
+      <obj_property name="ElementShortName">busaddress[31:0]</obj_property>
+      <obj_property name="ObjectShortName">busaddress[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/busdata">
+      <obj_property name="ElementShortName">busdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">busdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/buswe">
+      <obj_property name="ElementShortName">buswe[3:0]</obj_property>
+      <obj_property name="ObjectShortName">buswe[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/busre">
+      <obj_property name="ElementShortName">busre</obj_property>
+      <obj_property name="ObjectShortName">busre</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/dataout">
+      <obj_property name="ElementShortName">dataout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dataout[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/sramaddr">
+      <obj_property name="ElementShortName">sramaddr[13:0]</obj_property>
+      <obj_property name="ObjectShortName">sramaddr[13:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/sramdin">
+      <obj_property name="ElementShortName">sramdin[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sramdin[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/sramdout">
+      <obj_property name="ElementShortName">sramdout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sramdout[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/sramwe">
+      <obj_property name="ElementShortName">sramwe[3:0]</obj_property>
+      <obj_property name="ObjectShortName">sramwe[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/sramre">
+      <obj_property name="ElementShortName">sramre</obj_property>
+      <obj_property name="ObjectShortName">sramre</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/deviceSelect">
+      <obj_property name="ElementShortName">deviceSelect[10:0]</obj_property>
+      <obj_property name="ObjectShortName">deviceSelect[10:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/uartreadbusy">
+      <obj_property name="ElementShortName">uartreadbusy</obj_property>
+      <obj_property name="ObjectShortName">uartreadbusy</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider273" type="divider">
+      <obj_property name="label">cpu</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/clock">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/wallclock">
+      <obj_property name="ElementShortName">wallclock</obj_property>
+      <obj_property name="ObjectShortName">wallclock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/resetn">
+      <obj_property name="ElementShortName">resetn</obj_property>
+      <obj_property name="ObjectShortName">resetn</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/businitialized">
+      <obj_property name="ElementShortName">businitialized</obj_property>
+      <obj_property name="ObjectShortName">businitialized</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/busbusy">
+      <obj_property name="ElementShortName">busbusy</obj_property>
+      <obj_property name="ObjectShortName">busbusy</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/busaddress">
+      <obj_property name="ElementShortName">busaddress[31:0]</obj_property>
+      <obj_property name="ObjectShortName">busaddress[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/busdata">
+      <obj_property name="ElementShortName">busdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">busdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/buswe">
+      <obj_property name="ElementShortName">buswe[3:0]</obj_property>
+      <obj_property name="ObjectShortName">buswe[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/busre">
+      <obj_property name="ElementShortName">busre</obj_property>
+      <obj_property name="ObjectShortName">busre</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/dataout">
+      <obj_property name="ElementShortName">dataout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dataout[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/opcode">
+      <obj_property name="ElementShortName">opcode[4:0]</obj_property>
+      <obj_property name="ObjectShortName">opcode[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/aluop">
+      <obj_property name="ElementShortName">aluop[3:0]</obj_property>
+      <obj_property name="ObjectShortName">aluop[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/bluop">
+      <obj_property name="ElementShortName">bluop[3:0]</obj_property>
+      <obj_property name="ObjectShortName">bluop[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/func3">
+      <obj_property name="ElementShortName">func3[2:0]</obj_property>
+      <obj_property name="ObjectShortName">func3[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/func7">
+      <obj_property name="ElementShortName">func7[6:0]</obj_property>
+      <obj_property name="ObjectShortName">func7[6:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/func12">
+      <obj_property name="ElementShortName">func12[11:0]</obj_property>
+      <obj_property name="ObjectShortName">func12[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rs1">
+      <obj_property name="ElementShortName">rs1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs1[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rs2">
+      <obj_property name="ElementShortName">rs2[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs2[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rs3">
+      <obj_property name="ElementShortName">rs3[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs3[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rd">
+      <obj_property name="ElementShortName">rd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rd[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/csrindex">
+      <obj_property name="ElementShortName">csrindex[11:0]</obj_property>
+      <obj_property name="ObjectShortName">csrindex[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/immed">
+      <obj_property name="ElementShortName">immed[31:0]</obj_property>
+      <obj_property name="ObjectShortName">immed[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/selectimmedasrval2">
+      <obj_property name="ElementShortName">selectimmedasrval2</obj_property>
+      <obj_property name="ObjectShortName">selectimmedasrval2</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rval1">
+      <obj_property name="ElementShortName">rval1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rval2">
+      <obj_property name="ElementShortName">rval2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/rdin">
+      <obj_property name="ElementShortName">rdin[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rdin[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/aluout">
+      <obj_property name="ElementShortName">aluout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">aluout[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/branchout">
+      <obj_property name="ElementShortName">branchout</obj_property>
+      <obj_property name="ObjectShortName">branchout</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/cpumode">
+      <obj_property name="ElementShortName">cpumode[5:0]</obj_property>
+      <obj_property name="ObjectShortName">cpumode[5:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/PC">
+      <obj_property name="ElementShortName">PC[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PC[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/nextPC">
+      <obj_property name="ElementShortName">nextPC[31:0]</obj_property>
+      <obj_property name="ObjectShortName">nextPC[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/instruction">
+      <obj_property name="ElementShortName">instruction[31:0]</obj_property>
+      <obj_property name="ObjectShortName">instruction[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider183" type="divider">
+      <obj_property name="label">intregs</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/clock">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/rs1">
+      <obj_property name="ElementShortName">rs1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs1[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/rs2">
+      <obj_property name="ElementShortName">rs2[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rs2[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/rd">
+      <obj_property name="ElementShortName">rd[4:0]</obj_property>
+      <obj_property name="ObjectShortName">rd[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/wren">
+      <obj_property name="ElementShortName">wren</obj_property>
+      <obj_property name="ObjectShortName">wren</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/datain">
+      <obj_property name="ElementShortName">datain[31:0]</obj_property>
+      <obj_property name="ObjectShortName">datain[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/rval1">
+      <obj_property name="ElementShortName">rval1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/rval2">
+      <obj_property name="ElementShortName">rval2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/registers">
+      <obj_property name="ElementShortName">registers[0:31][31:0]</obj_property>
+      <obj_property name="ObjectShortName">registers[0:31][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+</wave_config>
