@@ -117,6 +117,7 @@ localparam CPU_FETCH	= 2;
 localparam CPU_DECODE	= 3;
 localparam CPU_EXEC		= 4;
 localparam CPU_LOAD		= 5;
+
 logic [5:0] cpumode;
 
 logic [31:0] immreach;
