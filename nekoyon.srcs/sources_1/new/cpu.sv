@@ -10,6 +10,8 @@ module cpu(
 	input wire reset,
 	input wire businitialized,
 	input wire busbusy,
+	input wire irqtrigger,
+	input wire [3:0] irqlines,
 	output logic ifetch = 1'b0,
 	output logic [31:0] busaddress = 32'd0,
 	inout wire [31:0] busdata,
@@ -22,39 +24,6 @@ module cpu(
 
 logic [31:0] dataout = 32'd0;
 assign busdata = (|buswe) ? dataout : 32'dz;
-
-// -----------------------------------------------------------------------
-// Integer register file and misc wires
-// -----------------------------------------------------------------------
-
-wire [4:0] opcode;
-wire [3:0] aluop;
-wire [3:0] bluop;
-wire [2:0] func3;
-wire [6:0] func7;
-wire [11:0] func12;
-wire [4:0] rs1;
-wire [4:0] rs2;
-wire [4:0] rs3;
-wire [4:0] rd;
-wire [11:0] csrindex;
-wire [31:0] immed;
-wire selectimmedasrval2;
-
-wire [31:0] rval1;
-wire [31:0] rval2;
-logic rwe = 1'b0;
-logic [31:0] rdin;
-
-registerfile IntegerRegFile(
-	.clock(clock),
-	.rs1(rs1),
-	.rs2(rs2),
-	.rd(rd),
-	.wren(rwe), 
-	.datain(rdin),
-	.rval1(rval1),
-	.rval2(rval2) );
 
 // -----------------------------------------------------------------------
 // Internal states
@@ -81,12 +50,54 @@ logic [31:0] immpc;
 logic [31:0] pc4;
 logic [31:0] branchpc;
 
-always_comb begin
-	immreach = rval1 + immed;
-	immpc = PC + immed;
-	pc4 = PC + 32'd4;
-	branchpc = PC + (branchout ? immed : 32'd4);
-end
+wire [4:0] opcode;
+wire [3:0] aluop;
+wire [3:0] bluop;
+wire [2:0] func3;
+wire [6:0] func7;
+wire [11:0] func12;
+wire [4:0] rs1;
+wire [4:0] rs2;
+wire [4:0] rs3;
+wire [4:0] rd;
+wire [11:0] csrindex;
+wire [31:0] immed;
+wire selectimmedasrval2;
+
+wire [31:0] rval1;
+wire [31:0] rval2;
+logic rwe = 1'b0;
+logic [31:0] rdin;
+
+wire [31:0] aluout;
+wire branchout;
+
+logic [4:0] CSRIndextoLinearIndex;
+logic [31:0] CSRReg [0:24];
+
+logic [63:0] internalcyclecounter = 64'd0;
+logic [63:0] internalwallclockcounter = 64'd0;
+logic [63:0] internalwallclockcounter1 = 64'd0;
+logic [63:0] internalwallclockcounter2 = 64'd0;
+logic [63:0] internaltimecmp = 64'd0;
+logic timertrigger = 1'b0;
+logic [63:0] internalretirecounter = 64'd0;
+logic timerinterrupt = 1'b0;
+logic externalinterrupt = 1'b0;
+
+// -----------------------------------------------------------------------
+// Integer register file and misc wires
+// -----------------------------------------------------------------------
+
+registerfile IntegerRegFile(
+	.clock(clock),
+	.rs1(rs1),
+	.rs2(rs2),
+	.rd(rd),
+	.wren(rwe), 
+	.datain(rdin),
+	.rval1(rval1),
+	.rval2(rval2) );
 
 // -----------------------------------------------------------------------
 // Decoder
@@ -112,7 +123,6 @@ decoder InstructionDecoder(
 // Integer ALU
 // -----------------------------------------------------------------------
 
-wire [31:0] aluout;
 IALU IntegerALU(
 	.aluout(aluout),
 	.func3(func3),
@@ -124,8 +134,6 @@ IALU IntegerALU(
 // Branch ALU
 // -----------------------------------------------------------------------
 
-wire branchout;
-
 BALU BranchALU(
 	.branchout(branchout),
 	.val1(rval1),
@@ -133,11 +141,19 @@ BALU BranchALU(
 	.bluop(bluop) );
 
 // -----------------------------------------------------------------------
-// Cycle/Timer/Reti CSRs
+// Address generation
 // -----------------------------------------------------------------------
 
-logic [4:0] CSRIndextoLinearIndex;
-logic [31:0] CSRReg [0:24];
+always_comb begin
+	immreach = rval1 + immed;
+	immpc = PC + immed;
+	pc4 = PC + 32'd4;
+	branchpc = PC + (branchout ? immed : 32'd4);
+end
+
+// -----------------------------------------------------------------------
+// Cycle/Timer/Reti CSRs
+// -----------------------------------------------------------------------
 
 // See https://cv32e40p.readthedocs.io/en/latest/control_status_registers/#cs-registers for defaults
 initial begin
@@ -201,22 +217,16 @@ end
 // Other custom CSRs r/w between 0x802-0x8FF
 
 // Advancing cycles is simple since clocks = cycles
-logic [63:0] internalcyclecounter = 64'd0;
 always @(posedge clock) begin
 	internalcyclecounter <= internalcyclecounter + 64'd1;
 end
 
 // Time is also simple since we know we have 25M ticks per second
 // from which we can derive seconds elapsed
-logic [63:0] internalwallclockcounter = 64'd0;
-logic [63:0] internalwallclockcounter1 = 64'd0;
-logic [63:0] internalwallclockcounter2 = 64'd0;
-logic [63:0] internaltimecmp = 64'd0;
 always @(posedge wallclock) begin
 	internalwallclockcounter <= internalwallclockcounter + 64'd1;
 end
 // Small adjustment to bring wallclock counter closer to cpu clock domain
-logic timertrigger = 1'b0;
 always @(posedge clock) begin
 	internalwallclockcounter1 <= internalwallclockcounter;
 	internalwallclockcounter2 <= internalwallclockcounter1;
@@ -224,19 +234,15 @@ always @(posedge clock) begin
 end
 
 // Retired instruction counter
-logic [63:0] internalretirecounter = 64'd0;
 always @(posedge clock) begin
 	internalretirecounter <= internalretirecounter + {63'd0, cpumode[CPU_RETIRE]};
 end
-
-logic timerinterrupt = 1'b0;
-logic externalinterrupt = 1'b0;
 
 // -----------------------------------------------------------------------
 // Core
 // -----------------------------------------------------------------------
 
-always @(posedge clock or posedge reset) begin
+always @(posedge clock) begin
 
 	if (reset) begin
 
@@ -276,7 +282,7 @@ always @(posedge clock or posedge reset) begin
 
 				// Trigger interrupts
 				timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
-				externalinterrupt <= 1'b0;//(CSRReg[`CSR_MIE][11] & IRQ);
+				externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
 
 				// Take load or op branch, otherwise process store in-place
 				if (opcode == `OPCODE_LOAD || opcode == `OPCODE_FLOAT_LDW) begin
@@ -528,7 +534,7 @@ always @(posedge clock or posedge reset) begin
 								CSRReg[`CSR_MCAUSE][15:0] <= 16'd11; // Machine External Interrupt
 								// Device mask (lower 15 bits of upper word)
 								// [11:0]:SWITCHES:SPIRX:UARTRX
-								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 12'd0, 3'b000};//IRQ_BITS};
+								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 11'd0, irqlines};
 							end
 							default: begin
 								CSRReg[`CSR_MCAUSE][15:0] <= 16'd0; // No interrupt/exception

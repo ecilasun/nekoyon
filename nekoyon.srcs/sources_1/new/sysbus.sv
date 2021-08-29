@@ -31,6 +31,9 @@ module sysbus(
     inout [1:0] ddr3_dqs_p,
     inout [1:0] ddr3_dqs_n,
     inout [15:0] ddr3_dq,
+    // Interrupts
+	output wire irqtrigger,
+	output wire [3:0] irqlines,
 	// Bus control
 	output wire busbusy,
 	input wire [31:0] busaddress,
@@ -63,7 +66,7 @@ wire [`DEVICE_COUNT-1:0] deviceSelect = {
 
 wire uartwe = deviceSelect[`DEV_UARTRW] ? (|buswe) : 1'b0;
 wire [31:0] uartdout;
-wire uartreadbusy;
+wire uartreadbusy, uartrcvempty;
 
 uartdriver UARTDevice(
 	.deviceSelect(deviceSelect),
@@ -75,6 +78,7 @@ uartdriver UARTDevice(
 	.uartreadbusy(uartreadbusy),
 	.busdata(busdata),
 	.uartdout(uartdout),
+	.uartrcvempty(uartrcvempty),
 	.uart_rxd_out(uart_rxd_out),
 	.uart_txd_in(uart_txd_in) );
 
@@ -142,6 +146,13 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 	.wea(sramwe) );
 
 // ----------------------------------------------------------------------------
+// External interrupts
+// ----------------------------------------------------------------------------
+
+assign irqlines = {3'b000, ~uartrcvempty}; // TODO: Generate interrupt bits for more devices
+assign irqtrigger = |irqlines;
+
+// ----------------------------------------------------------------------------
 // Cache wiring
 // ----------------------------------------------------------------------------
 
@@ -150,17 +161,20 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 // 0000    000 0000 0000 0000  0000 0000  000     00
 
 // The cache behavior:
-// - Cache loads new page from DDR3 on miss
-// - If, on cache miss, the old page was dirty, it's first flushed back to DDR3
-// - If the old page wasn't dirty on cache miss, contents are discarded
-// - On a cache hit, reads proceed at same speed as if they were issued to S-RAM
+// - On cache miss:
+//   - Is old cache line dirty?
+//     - Y: Flush old line to DDR3, load new line
+//     - N: Load new line, discard old contents
+// - On cache hit:
+//   - Proceed with read or write at same speed as S-RAM
 
 logic [31:0] cwidemask	= 32'd0;	// Wide mask generate from write mask
 logic [15:0] oldtag		= 16'd0;	// Previous ctag + dirty bit
 
-wire [7:0] cline = busaddress[12:5];  // $:0..255
-wire [14:0] ctag = busaddress[27:13]; // Ignore 4 highest bits since only r/w for DDR3 are routed here
-wire [2:0] coffset = busaddress[4:2]; // 8xDWORD (256bits) aligned
+wire [14:0] ctag = busaddress[27:13]; // Ignore 4 highest bits (device ID) since only r/w for DDR3 are routed here
+wire [7:0] cline = busaddress[12:5];  // D$:0..255, I$:256..511 via ifetch flag used as extra upper bit: {ifetch,cline}
+wire [2:0] coffset = busaddress[4:2]; // 8xDWORD (256bits), DWORD select line
+
 logic cwe = 1'b0;
 logic [255:0] cdin = 256'd0;
 logic [15:0] ctagin = 16'd0;

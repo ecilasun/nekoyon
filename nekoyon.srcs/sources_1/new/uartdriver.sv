@@ -12,6 +12,7 @@ module uartdriver(
 	output logic uartreadbusy = 1'b0,
 	input wire [31:0] busdata,
 	output logic [31:0] uartdout = 32'd0,
+	output wire uartrcvempty,
 	output wire uart_rxd_out,
 	input wire uart_txd_in);
 
@@ -98,7 +99,7 @@ async_receiver UART_receive(
 	.RxD_idle(),
 	.RxD_endofpacket() );
 
-wire uartrcvfull, uartrcvempty, uartrcvvalid;
+wire uartrcvfull, uartrcvvalid;
 logic [7:0] uartrcvdin;
 wire [7:0] uartrcvdout;
 logic uartrcvre = 1'b0, uartrcvwe = 1'b0;

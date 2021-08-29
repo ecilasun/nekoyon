@@ -53,6 +53,8 @@ wire [31:0] busaddress;
 wire [31:0] busdata;
 wire [3:0] buswe;
 wire busre;
+wire irqtrigger;
+wire [3:0] irqlines;
 
 sysbus SystemBus(
 	// Control
@@ -83,7 +85,10 @@ sysbus SystemBus(
     .ddr3_dqs_p(ddr3_dqs_p),
     .ddr3_dqs_n(ddr3_dqs_n),
     .ddr3_dq(ddr3_dq),
-    // Bus
+    // Interrupts
+	.irqtrigger(irqtrigger),
+	.irqlines(irqlines),
+    // Bus control
 	.busbusy(busbusy),
 	.busaddress(busaddress),
 	.busdata(busdata),
@@ -94,14 +99,14 @@ sysbus SystemBus(
 // CPU
 // ----------------------------------------------------------------------------
 
-wire [3:0] diagnosis;
-
 cpu CPUCore0(
 	.clock(cpuclock),
 	.wallclock(wallclock),
 	.reset(reset),
 	.businitialized(businitialized),
 	.busbusy(busbusy),
+	.irqtrigger(irqtrigger),
+	.irqlines(irqlines),
 	.ifetch(ifetch),
 	.busaddress(busaddress),
 	.busdata(busdata),
