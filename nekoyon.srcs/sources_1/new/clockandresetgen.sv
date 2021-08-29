@@ -26,16 +26,16 @@ DDR3Clocks DDR3MemoryClock(
 wire internalreset = ~(clkAlocked & ddr3clklocked);
 
 // Delayed reset post-clock-lock
-logic [7:0] resetcountdown = 8'hFF;
+logic [3:0] resetcountdown = 4'hF;
 always @(posedge wallclock) begin // Using slowest clock
 	if (internalreset) begin
-		resetcountdown <= 8'hFF;
+		resetcountdown <= 4'hF;
 		devicereset <= 1'b1;
 	end else begin
-		if (/*busready &&*/ (resetcountdown == 8'h00))
+		if (/*busready &&*/ (resetcountdown == 4'h0))
 			devicereset <= 1'b0;
 		else
-			resetcountdown <= resetcountdown - 8'h01;
+			resetcountdown <= resetcountdown - 4'h1;
 	end
 end
 
