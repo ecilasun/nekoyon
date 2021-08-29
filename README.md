@@ -26,3 +26,6 @@ This version implements the following:
 
 ## License
 This is intended as a free IP. Please see the accompanying LICENSE.txt file for license terms.
+The project includes code from other opensource projects which contain their respective license information
+in the code file. The DDR3 memory interface and FIFOs use Vivado IPs, however do not necessarily depend on
+them and should be portable to use replacement IPs.
