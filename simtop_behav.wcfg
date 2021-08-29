@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="45.647236104 us"></ZoomStartTime>
-      <ZoomEndTime time="156.747236105 us"></ZoomEndTime>
-      <Cursor1Time time="138.230569438 us"></Cursor1Time>
+      <ZoomStartTime time="54,998.850499 ns"></ZoomStartTime>
+      <ZoomEndTime time="59,290.850500 ns"></ZoomEndTime>
+      <Cursor1Time time="58,575.517166 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="195"></NameColumnWidth>
+      <NameColumnWidth column_width="183"></NameColumnWidth>
       <ValueColumnWidth column_width="97"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="131" />
+   <WVObjectSize size="141" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -59,6 +59,10 @@
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/busbusy">
       <obj_property name="ElementShortName">busbusy</obj_property>
       <obj_property name="ObjectShortName">busbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/ifetch">
+      <obj_property name="ElementShortName">ifetch</obj_property>
+      <obj_property name="ObjectShortName">ifetch</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/busactive">
       <obj_property name="ElementShortName">busactive</obj_property>
@@ -105,8 +109,9 @@
       <obj_property name="ObjectShortName">sramre</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/deviceSelect">
-      <obj_property name="ElementShortName">deviceSelect[4:0]</obj_property>
-      <obj_property name="ObjectShortName">deviceSelect[4:0]</obj_property>
+      <obj_property name="ElementShortName">deviceSelect[5:0]</obj_property>
+      <obj_property name="ObjectShortName">deviceSelect[5:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/uartreadbusy">
       <obj_property name="ElementShortName">uartreadbusy</obj_property>
@@ -131,6 +136,10 @@
    <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/busbusy">
       <obj_property name="ElementShortName">busbusy</obj_property>
       <obj_property name="ObjectShortName">busbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/CPUCore0/ifetch">
+      <obj_property name="ElementShortName">ifetch</obj_property>
+      <obj_property name="ObjectShortName">ifetch</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/busaddress">
       <obj_property name="ElementShortName">busaddress[31:0]</obj_property>
@@ -225,8 +234,8 @@
       <obj_property name="ObjectShortName">branchout</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/cpumode">
-      <obj_property name="ElementShortName">cpumode[5:0]</obj_property>
-      <obj_property name="ObjectShortName">cpumode[5:0]</obj_property>
+      <obj_property name="ElementShortName">cpumode[6:0]</obj_property>
+      <obj_property name="ObjectShortName">cpumode[6:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/PC">
       <obj_property name="ElementShortName">PC[31:0]</obj_property>
@@ -505,7 +514,7 @@
       <obj_property name="ObjectShortName">ddr3uistate[2:0]</obj_property>
    </wvobject>
    <wvobject fp_name="divider567" type="divider">
-      <obj_property name="label">cache</obj_property>
+      <obj_property name="label">cachedriver</obj_property>
       <obj_property name="DisplayName">label</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/ctag">
@@ -528,14 +537,6 @@
       <obj_property name="ElementShortName">oldtag[15:0]</obj_property>
       <obj_property name="ObjectShortName">oldtag[15:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/cachetags">
-      <obj_property name="ElementShortName">cachetags[0:255][15:0]</obj_property>
-      <obj_property name="ObjectShortName">cachetags[0:255][15:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/cache">
-      <obj_property name="ElementShortName">cache[0:255][255:0]</obj_property>
-      <obj_property name="ObjectShortName">cache[0:255][255:0]</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/loadindex">
       <obj_property name="ElementShortName">loadindex</obj_property>
       <obj_property name="ObjectShortName">loadindex</obj_property>
@@ -543,5 +544,45 @@
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/currentcacheline">
       <obj_property name="ElementShortName">currentcacheline[255:0]</obj_property>
       <obj_property name="ObjectShortName">currentcacheline[255:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider421" type="divider">
+      <obj_property name="label">I/DCache</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/IDCache/clock">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/IDCache/we">
+      <obj_property name="ElementShortName">we</obj_property>
+      <obj_property name="ObjectShortName">we</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/cline">
+      <obj_property name="ElementShortName">cline[7:0]</obj_property>
+      <obj_property name="ObjectShortName">cline[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/cdin">
+      <obj_property name="ElementShortName">cdin[255:0]</obj_property>
+      <obj_property name="ObjectShortName">cdin[255:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/ctagin">
+      <obj_property name="ElementShortName">ctagin[15:0]</obj_property>
+      <obj_property name="ObjectShortName">ctagin[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/cdout">
+      <obj_property name="ElementShortName">cdout[255:0]</obj_property>
+      <obj_property name="ObjectShortName">cdout[255:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/ctagout">
+      <obj_property name="ElementShortName">ctagout[15:0]</obj_property>
+      <obj_property name="ObjectShortName">ctagout[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/tags">
+      <obj_property name="ElementShortName">tags[0:255][15:0]</obj_property>
+      <obj_property name="ObjectShortName">tags[0:255][15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/lines">
+      <obj_property name="ElementShortName">lines[0:255][255:0]</obj_property>
+      <obj_property name="ObjectShortName">lines[0:255][255:0]</obj_property>
    </wvobject>
 </wave_config>

@@ -10,6 +10,7 @@ module cpu(
 	input wire reset,
 	input wire businitialized,
 	input wire busbusy,
+	output logic ifetch = 1'b0,
 	output logic [31:0] busaddress = 32'd0,
 	inout wire [31:0] busdata,
 	output logic [3:0] buswe = 4'h0,
@@ -21,6 +22,39 @@ module cpu(
 
 logic [31:0] dataout = 32'd0;
 assign busdata = (|buswe) ? dataout : 32'dz;
+
+// -----------------------------------------------------------------------
+// Integer register file and misc wires
+// -----------------------------------------------------------------------
+
+wire [4:0] opcode;
+wire [3:0] aluop;
+wire [3:0] bluop;
+wire [2:0] func3;
+wire [6:0] func7;
+wire [11:0] func12;
+wire [4:0] rs1;
+wire [4:0] rs2;
+wire [4:0] rs3;
+wire [4:0] rd;
+wire [11:0] csrindex;
+wire [31:0] immed;
+wire selectimmedasrval2;
+
+wire [31:0] rval1;
+wire [31:0] rval2;
+logic rwe = 1'b0;
+logic [31:0] rdin;
+
+registerfile IntegerRegFile(
+	.clock(clock),
+	.rs1(rs1),
+	.rs2(rs2),
+	.rd(rd),
+	.wren(rwe), 
+	.datain(rdin),
+	.rval1(rval1),
+	.rval2(rval2) );
 
 // -----------------------------------------------------------------------
 // Internal states
@@ -58,20 +92,6 @@ end
 // Decoder
 // -----------------------------------------------------------------------
 
-wire [4:0] opcode;
-wire [3:0] aluop;
-wire [3:0] bluop;
-wire [2:0] func3;
-wire [6:0] func7;
-wire [11:0] func12;
-wire [4:0] rs1;
-wire [4:0] rs2;
-wire [4:0] rs3;
-wire [4:0] rd;
-wire [11:0] csrindex;
-wire [31:0] immed;
-wire selectimmedasrval2;
-
 decoder InstructionDecoder(
 	.instruction(instruction),
 	.opcode(opcode),
@@ -88,25 +108,6 @@ decoder InstructionDecoder(
 	.immed(immed),
 	.selectimmedasrval2(selectimmedasrval2) );
 
-// -----------------------------------------------------------------------
-// Integer register file
-// -----------------------------------------------------------------------
-
-wire [31:0] rval1;
-wire [31:0] rval2;
-logic rwe = 1'b0;
-logic [31:0] rdin;
-
-registerfile IntegerRegFile(
-	.clock(clock),
-	.rs1(rs1),
-	.rs2(rs2),
-	.rd(rd),
-	.wren(rwe), 
-	.datain(rdin),
-	.rval1(rval1),
-	.rval2(rval2) );
-	
 // -----------------------------------------------------------------------
 // Integer ALU
 // -----------------------------------------------------------------------
@@ -266,6 +267,7 @@ always @(posedge clock or posedge reset) begin
 
 			cpumode[CPU_DECODE]: begin
 				nextPC <= pc4;
+				ifetch <= 1'b0;
 
 				// Update CSRs with internal counters
 				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
@@ -489,6 +491,7 @@ always @(posedge clock or posedge reset) begin
 				end else begin
 					PC <= nextPC;
 					busaddress <= nextPC;
+					ifetch <= 1'b1;
 					busre <= 1'b1;
 
 					// Copy CSR states to internal registers

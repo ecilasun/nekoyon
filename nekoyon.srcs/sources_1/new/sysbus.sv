@@ -8,7 +8,8 @@ module sysbus(
 	input wire cpuclock,
 	input wire reset,
 	output logic businitialized = 1'b0,
-	output wire busbusy,
+	// CPU
+	input wire ifetch, // High when fetching instructions, low otherwise
 	// UART
 	output wire uart_rxd_out,
 	input wire uart_txd_in,
@@ -31,6 +32,7 @@ module sysbus(
     inout [1:0] ddr3_dqs_n,
     inout [15:0] ddr3_dq,
 	// Bus control
+	output wire busbusy,
 	input wire [31:0] busaddress,
 	inout wire [31:0] busdata,
 	input wire [3:0] buswe,
@@ -48,11 +50,11 @@ assign busdata = (|buswe) ? 32'dz : dataout;
 // ----------------------------------------------------------------------------
 
 wire [`DEVICE_COUNT-1:0] deviceSelect = {
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx08 UART read/write port					+
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx04 UART incoming queue byte available	+
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 02: 0x8xxxxx00 UART outgoing queue full				+
-	(busaddress[31:28]==4'b0001) ? 1'b1 : 1'b0,							// 01: 0x10000000 - 0x1FFFFFFF - S-RAM (64Kbytes)		+
-	(busaddress[31:28]==4'b0000) ? 1'b1 : 1'b0							// 00: 0x00000000 - 0x0FFFFFFF - DDR3 (256Mbytes)		-
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx08 UART read/write port					+DEV_UARTRW
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx04 UART incoming queue byte available	+DEV_UARTBYTEAVAILABLE
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 02: 0x8xxxxx00 UART outgoing queue full				+DEV_UARTSENDFIFOFULL
+	(busaddress[31:28]==4'b0001) ? 1'b1 : 1'b0,							// 01: 0x10000000 - 0x1FFFFFFF - S-RAM (64Kbytes)		+DEV_SRAM
+	(busaddress[31:28]==4'b0000) ? 1'b1 : 1'b0							// 00: 0x00000000 - 0x0FFFFFFF - DDR3 (256Mbytes)		+DEV_DDR3
 };
 
 // ----------------------------------------------------------------------------
@@ -147,23 +149,33 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 // device  tag                 line       offset  byteindex
 // 0000    000 0000 0000 0000  0000 0000  000     00
 
-logic [14:0] ctag		= 15'd0;	// Ignore 4 highest bits since only r/w for DDR3 are routed here
-logic [7:0] cline		= 8'd0;		// $:0..255
-logic [2:0] coffset		= 3'd0;		// 8xDWORD (256bits) aligned
+// The cache behavior:
+// - Cache loads new page from DDR3 on miss
+// - If, on cache miss, the old page was dirty, it's first flushed back to DDR3
+// - If the old page wasn't dirty on cache miss, contents are discarded
+// - On a cache hit, reads proceed at same speed as if they were issued to S-RAM
+
 logic [31:0] cwidemask	= 32'd0;	// Wide mask generate from write mask
 logic [15:0] oldtag		= 16'd0;	// Previous ctag + dirty bit
 
-logic [15:0] cachetags[0:255];
-logic [255:0] cache[0:255];
+wire [7:0] cline = busaddress[12:5];  // $:0..255
+wire [14:0] ctag = busaddress[27:13]; // Ignore 4 highest bits since only r/w for DDR3 are routed here
+wire [2:0] coffset = busaddress[4:2]; // 8xDWORD (256bits) aligned
+logic cwe = 1'b0;
+logic [255:0] cdin = 256'd0;
+logic [15:0] ctagin = 16'd0;
+wire [255:0] cdout;
+wire [15:0] ctagout;
 
-initial begin
-	integer i;
-	// All pages are 'clean', all tags are invalid and cache is zeroed out by default
-	for (int i=0;i<256;i=i+1) begin
-		cachetags[i] = 16'h7FFF; // Top bit zero
-		cache[i] = 256'd0;
-	end
-end
+cache IDCache(
+	.clock(cpuclock),
+	.we(cwe),
+	.ifetch(ifetch),
+	.cline(cline),
+	.cdin(cdin),
+	.ctagin(ctagin),
+	.cdout(cdout),
+	.ctagout(ctagout) );
 
 logic loadindex = 1'b0;
 logic [255:0] currentcacheline;
@@ -208,20 +220,21 @@ always @(posedge cpuclock) begin
 			end
 
 			BUS_IDLE: begin
+				// Stop cache writes
+				cwe <= 1'b0;
+
 				if (deviceSelect[`DEV_DDR3] & (busre | (|buswe))) begin
-					currentcacheline <= cache[busaddress[12:5]];
-					oldtag <= cachetags[busaddress[12:5]];
-					cline <= busaddress[12:5];
-					ctag <= busaddress[27:13];
-					coffset <= busaddress[4:2];
-					cwidemask = {{8{buswe[3]}}, {8{buswe[2]}}, {8{buswe[1]}}, {8{buswe[0]}}};
+					currentcacheline <= cdout;
+					oldtag <= ctagout;
+					cdin <= cdout;
+					ctagin <= ctagout;
+					cwidemask <= {{8{buswe[3]}}, {8{buswe[2]}}, {8{buswe[1]}}, {8{buswe[0]}}};
 					ddr3wdat <= busdata;
 				end else begin
 					currentcacheline <= 256'd0;
 					oldtag <= 16'd0;
-					cline <= 8'd0;
-					ctag <= 15'd0;
-					coffset <= 3'd0;
+					cdin <= 256'd0;
+					ctagin <= 16'd0;
 					cwidemask <= 32'd0;
 					ddr3wdat <= 32'd0;
 				end
@@ -235,6 +248,7 @@ always @(posedge cpuclock) begin
 			end
 
 			BUS_READ: begin
+				cwe <= 1'b0;
 				if (readbusy) begin
 					// Stall while any device sets readbusy
 					busmode <= BUS_READ;
@@ -286,18 +300,19 @@ always @(posedge cpuclock) begin
 				case(1'b1)
 					deviceSelect[`DEV_DDR3]: begin
 						if (oldtag[14:0] == ctag) begin
+							cwe <= 1'b1;
 							case (coffset)
-								3'b000: cache[cline][31:0] <= ((~cwidemask)&currentcacheline[31:0]) | (cwidemask&ddr3wdat);
-								3'b001: cache[cline][63:32] <= ((~cwidemask)&currentcacheline[63:32]) | (cwidemask&ddr3wdat);
-								3'b010: cache[cline][95:64] <= ((~cwidemask)&currentcacheline[95:64]) | (cwidemask&ddr3wdat);
-								3'b011: cache[cline][127:96] <= ((~cwidemask)&currentcacheline[127:96]) | (cwidemask&ddr3wdat);
-								3'b100: cache[cline][159:128] <= ((~cwidemask)&currentcacheline[159:128]) | (cwidemask&ddr3wdat);
-								3'b101: cache[cline][191:160] <= ((~cwidemask)&currentcacheline[191:160]) | (cwidemask&ddr3wdat);
-								3'b110: cache[cline][223:192] <= ((~cwidemask)&currentcacheline[223:192]) | (cwidemask&ddr3wdat);
-								3'b111: cache[cline][255:224] <= ((~cwidemask)&currentcacheline[255:224]) | (cwidemask&ddr3wdat);
+								3'b000: cdin[31:0] <= ((~cwidemask)&currentcacheline[31:0]) | (cwidemask&ddr3wdat);
+								3'b001: cdin[63:32] <= ((~cwidemask)&currentcacheline[63:32]) | (cwidemask&ddr3wdat);
+								3'b010: cdin[95:64] <= ((~cwidemask)&currentcacheline[95:64]) | (cwidemask&ddr3wdat);
+								3'b011: cdin[127:96] <= ((~cwidemask)&currentcacheline[127:96]) | (cwidemask&ddr3wdat);
+								3'b100: cdin[159:128] <= ((~cwidemask)&currentcacheline[159:128]) | (cwidemask&ddr3wdat);
+								3'b101: cdin[191:160] <= ((~cwidemask)&currentcacheline[191:160]) | (cwidemask&ddr3wdat);
+								3'b110: cdin[223:192] <= ((~cwidemask)&currentcacheline[223:192]) | (cwidemask&ddr3wdat);
+								3'b111: cdin[255:224] <= ((~cwidemask)&currentcacheline[255:224]) | (cwidemask&ddr3wdat);
 							endcase
 							// This cache line is now dirty
-							cachetags[cline][15] <= 1'b1;
+							ctagin[15] <= 1'b1;
 							busmode <= BUS_IDLE;
 						end else begin
 							ddr3rw <= 1'b1;
@@ -375,12 +390,14 @@ always @(posedge cpuclock) begin
 			end
 
 			BUS_UPDATEFINALIZE: begin
-				cache[cline] <= currentcacheline;
-				cachetags[cline] <= {1'b0, ctag};
+				cdin <= currentcacheline;
+				ctagin <= {1'b0, ctag};
 				oldtag <= {1'b0, ctag};
 				if (ddr3rw == 1'b0) begin
+					cwe <= 1'b1; // Do not forget to update cache
 					busmode <= BUS_READ; // Back to read
 				end else begin
+					// NOTE: WRITE will always update cache line
 					busmode <= BUS_WRITE; // Back to write
 				end
 			end
