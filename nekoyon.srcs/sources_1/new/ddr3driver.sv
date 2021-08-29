@@ -151,10 +151,27 @@ always @ (posedge ui_clk) begin
 			DECODECMD: begin
 				ddr3cmdre <= 1'b0;
 				if (ddr3cmdvalid) begin
-					if (ddr3cmdout[152]==1'b1) // Write request?
-						ddr3uistate <= WRITE;
-					else
-						ddr3uistate <= READ;
+					if (ddr3cmdout[152]==1'b1) begin // Write request?
+						if (app_rdy & app_wdf_rdy) begin
+							// Take early opportunity to write
+							app_en <= 1;
+							app_wdf_wren <= 1;
+							app_addr <= {1'b0, ddr3cmdout[151:128], 3'b000}; // Addresses are in multiples of 16 bits x8 == 128 bits, top bit is supposed to stay zero
+							app_cmd <= CMD_WRITE;
+							app_wdf_data <= ddr3cmdout[127:0]; // 128bit value to write to memory from cache
+							ddr3uistate <= WRITE_DONE;
+						end else
+							ddr3uistate <= WRITE;
+					end else begin
+						if (app_rdy) begin
+							// Take early opportunity to read
+							app_en <= 1;
+							app_addr <= {1'b0, ddr3cmdout[151:128], 3'b000}; // Addresses are in multiples of 16 bits x8 == 128 bits, top bit is supposed to stay zero
+							app_cmd <= CMD_READ;
+							ddr3uistate <= READ_DONE;
+						end else
+							ddr3uistate <= READ;
+					end
 				end
 			end
 
