@@ -100,8 +100,8 @@ IALU IntegerALU(
 // -----------------------------------------------------------------------
 
 wire branchout;
+
 BALU BranchALU(
-	.clock(clock),
 	.branchout(branchout),
 	.val1(rval1),
 	.val2(rval2),
@@ -202,7 +202,7 @@ always @(posedge clock or posedge reset) begin
 					cpumode[CPU_LOAD] <= 1'b1;
 				end else begin
 					/*if (opcode == `OPCODE_FLOAT_LDW) begin
-						fregwena <= 1'b1;
+						frwe <= 1'b1;
 					end else begin*/
 						rwe <= 1'b1;
 					/*end*/

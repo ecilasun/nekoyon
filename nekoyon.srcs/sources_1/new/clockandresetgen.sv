@@ -4,9 +4,11 @@ module clockandresetgen(
 	input wire sys_clock_i,
 	output wire wallclock,
 	output wire cpuclock,
+	output wire sys_clk_in,
+	output wire ddr3_ref,
 	output logic devicereset = 1'b1 );
 
-wire clkAlocked;//, ddr3clklocked;
+wire clkAlocked, ddr3clklocked;
 
 cpuclockgen CentralClock(
 	.clk_in1(sys_clock_i),
@@ -14,14 +16,14 @@ cpuclockgen CentralClock(
 	.cpuclock(cpuclock),
 	.locked(clkAlocked) );
 
-//ddr3clockgen DDR3MemClock(
-//	.clk_in1(sys_clock_i),
-//	.sys_clk_in(sys_clk_in),
-//	.ddr3_ref(ddr3_ref),
-//	.locked(ddr3clklocked));
+DDR3Clocks DDR3MemoryClock(
+	.clk_in1(sys_clock_i),
+	.sys_clk_in(sys_clk_in),
+	.ddr3_ref(ddr3_ref),
+	.locked(ddr3clklocked));
 
 // Hold reset until clocks are locked
-wire internalreset = ~(clkAlocked);// & ddr3clklocked);
+wire internalreset = ~(clkAlocked & ddr3clklocked);
 
 // Delayed reset post-clock-lock
 logic [7:0] resetcountdown = 8'hFF;

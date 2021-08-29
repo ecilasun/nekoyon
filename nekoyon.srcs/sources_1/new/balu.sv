@@ -3,7 +3,6 @@
 `include "cpuops.vh"
 
 module BALU(
-	input wire clock,
 	output logic branchout = 1'b0,
 	input wire [31:0] val1,
 	input wire [31:0] val2,
