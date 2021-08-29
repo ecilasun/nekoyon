@@ -181,10 +181,12 @@ logic [15:0] ctagin = 16'd0;
 wire [255:0] cdout;
 wire [15:0] ctagout;
 
+// NOTE: 8Kbytes worth of D$ with dirty bits set won't make it to I$ without a FENCE/FENCE.I pair.
+// For now, we keep ifetch set to zero to avoid I$ seeing the wrong values directly from DDR3
 cache IDCache(
 	.clock(cpuclock),
 	.we(cwe),
-	.ifetch(ifetch),
+	.ifetch(1'b0/*ifetch*/),
 	.cline(cline),
 	.cdin(cdin),
 	.ctagin(ctagin),
