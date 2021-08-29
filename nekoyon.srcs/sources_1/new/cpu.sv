@@ -23,7 +23,7 @@ logic [31:0] dataout = 32'd0;
 assign busdata = (|buswe) ? dataout : 32'dz;
 
 // -----------------------------------------------------------------------
-// Internal state
+// Internal states
 // -----------------------------------------------------------------------
 
 logic [31:0] PC;
@@ -31,6 +31,28 @@ logic [31:0] nextPC;
 logic [31:0] instruction;
 logic ebreak;
 logic illegalinstruction;
+
+localparam CPU_RESET	 = 0;
+localparam CPU_RETIRE	 = 1;
+localparam CPU_FETCH	 = 2;
+localparam CPU_DECODE	 = 3;
+localparam CPU_EXEC		 = 4;
+localparam CPU_LOAD		 = 5;
+localparam CPU_UPDATECSR = 6;
+
+logic [6:0] cpumode;
+
+logic [31:0] immreach;
+logic [31:0] immpc;
+logic [31:0] pc4;
+logic [31:0] branchpc;
+
+always_comb begin
+	immreach = rval1 + immed;
+	immpc = PC + immed;
+	pc4 = PC + 32'd4;
+	branchpc = PC + (branchout ? immed : 32'd4);
+end
 
 // -----------------------------------------------------------------------
 // Decoder
@@ -212,28 +234,6 @@ logic externalinterrupt = 1'b0;
 // -----------------------------------------------------------------------
 // Core
 // -----------------------------------------------------------------------
-
-localparam CPU_RESET	 = 0;
-localparam CPU_RETIRE	 = 1;
-localparam CPU_FETCH	 = 2;
-localparam CPU_DECODE	 = 3;
-localparam CPU_EXEC		 = 4;
-localparam CPU_LOAD		 = 5;
-localparam CPU_UPDATECSR = 6;
-
-logic [5:0] cpumode;
-
-logic [31:0] immreach;
-logic [31:0] immpc;
-logic [31:0] pc4;
-logic [31:0] branchpc;
-
-always_comb begin
-	immreach = rval1 + immed;
-	immpc = PC + immed;
-	pc4 = PC + 32'd4;
-	branchpc = PC + (branchout ? immed : 32'd4);
-end
 
 always @(posedge clock or posedge reset) begin
 
