@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="54,998.850499 ns"></ZoomStartTime>
-      <ZoomEndTime time="59,290.850500 ns"></ZoomEndTime>
-      <Cursor1Time time="58,575.517166 ns"></Cursor1Time>
+      <ZoomStartTime time="319.166666 ns"></ZoomStartTime>
+      <ZoomEndTime time="1,136.166667 ns"></ZoomEndTime>
+      <Cursor1Time time="1,000.000000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="183"></NameColumnWidth>
+      <NameColumnWidth column_width="177"></NameColumnWidth>
       <ValueColumnWidth column_width="97"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="141" />
+   <WVObjectSize size="150" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -39,6 +39,42 @@
    <wvobject type="logic" fp_name="/simtop/topinst/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider147" type="divider">
+      <obj_property name="label">arbiter</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBusArbiter/busbusy">
+      <obj_property name="ElementShortName">busbusy</obj_property>
+      <obj_property name="ObjectShortName">busbusy</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBusArbiter/arbusy">
+      <obj_property name="ElementShortName">arbusy</obj_property>
+      <obj_property name="ObjectShortName">arbusy</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/req0">
+      <obj_property name="ElementShortName">req0[4:0]</obj_property>
+      <obj_property name="ObjectShortName">req0[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/req1">
+      <obj_property name="ElementShortName">req1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">req1[4:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/addr0">
+      <obj_property name="ElementShortName">addr0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr0[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/addr1">
+      <obj_property name="ElementShortName">addr1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/reqaddr0">
+      <obj_property name="ElementShortName">reqaddr0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">reqaddr0[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/reqaddr1">
+      <obj_property name="ElementShortName">reqaddr1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">reqaddr1[31:0]</obj_property>
    </wvobject>
    <wvobject fp_name="divider242" type="divider">
       <obj_property name="label">sysbus</obj_property>
@@ -109,9 +145,8 @@
       <obj_property name="ObjectShortName">sramre</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/deviceSelect">
-      <obj_property name="ElementShortName">deviceSelect[5:0]</obj_property>
-      <obj_property name="ObjectShortName">deviceSelect[5:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
+      <obj_property name="ElementShortName">deviceSelect[4:0]</obj_property>
+      <obj_property name="ObjectShortName">deviceSelect[4:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/uartreadbusy">
       <obj_property name="ElementShortName">uartreadbusy</obj_property>
@@ -578,11 +613,11 @@
       <obj_property name="ObjectShortName">ctagout[15:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/tags">
-      <obj_property name="ElementShortName">tags[0:255][15:0]</obj_property>
-      <obj_property name="ObjectShortName">tags[0:255][15:0]</obj_property>
+      <obj_property name="ElementShortName">tags[0:511][15:0]</obj_property>
+      <obj_property name="ObjectShortName">tags[0:511][15:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/IDCache/lines">
-      <obj_property name="ElementShortName">lines[0:255][255:0]</obj_property>
-      <obj_property name="ObjectShortName">lines[0:255][255:0]</obj_property>
+      <obj_property name="ElementShortName">lines[0:511][255:0]</obj_property>
+      <obj_property name="ObjectShortName">lines[0:511][255:0]</obj_property>
    </wvobject>
 </wave_config>

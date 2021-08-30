@@ -50,7 +50,7 @@ logic [31:0] immpc;
 logic [31:0] pc4;
 logic [31:0] branchpc;
 
-wire [4:0] opcode;
+wire [18:0] instrOneHot;
 wire [3:0] aluop;
 wire [3:0] bluop;
 wire [2:0] func3;
@@ -105,7 +105,7 @@ registerfile IntegerRegFile(
 
 decoder InstructionDecoder(
 	.instruction(instruction),
-	.opcode(opcode),
+	.instrOneHot(instrOneHot),
 	.aluop(aluop),
 	.bluop(bluop),
 	.func3(func3),
@@ -275,26 +275,26 @@ always @(posedge clock) begin
 				nextPC <= pc4;
 				ifetch <= 1'b0;
 
+				// Trigger interrupts
+				timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
+				externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
+
 				// Update CSRs with internal counters
 				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
 				{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
 				{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
 
-				// Trigger interrupts
-				timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
-				externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
-
 				// Take load or op branch, otherwise process store in-place
-				if (opcode == `OPCODE_LOAD || opcode == `OPCODE_FLOAT_LDW) begin
+				if (instrOneHot[`O_H_LOAD] | instrOneHot[`O_H_FLOAT_LDW]) begin
 					busaddress <= immreach;
 					busre <= 1'b1;
 					cpumode[CPU_LOAD] <= 1'b1;
-				end else if (opcode == `OPCODE_STORE || opcode == `OPCODE_FLOAT_STW) begin
+				end else if (instrOneHot[`O_H_STORE] | instrOneHot[`O_H_FLOAT_STW]) begin
 					busaddress <= immreach;
 					case (func3)
 						3'b000: begin // BYTE
 							dataout <= {rval2[7:0], rval2[7:0], rval2[7:0], rval2[7:0]};
-							unique case (immreach[1:0])
+							case (immreach[1:0])
 								2'b11: begin buswe <= 4'h8; end
 								2'b10: begin buswe <= 4'h4; end
 								2'b01: begin buswe <= 4'h2; end
@@ -303,13 +303,13 @@ always @(posedge clock) begin
 						end
 						3'b001: begin // WORD
 							dataout <= {rval2[15:0], rval2[15:0]};
-							unique case (immreach[1])
+							case (immreach[1])
 								1'b1: begin buswe <= 4'hC; end
 								1'b0: begin buswe <= 4'h3; end
 							endcase
 						end
 						default: begin // DWORD
-							dataout <= /*(opcode == `OPCODE_FLOAT_STW) ? frval2 :*/ rval2;
+							dataout <= /*(instrOneHot[`O_H_FLOAT_STW]) ? frval2 :*/ rval2;
 							buswe <= 4'hF;
 						end
 					endcase
@@ -324,14 +324,14 @@ always @(posedge clock) begin
 				if (busbusy) begin
 					cpumode[CPU_LOAD] <= 1'b1;
 				end else begin
-					/*if (opcode == `OPCODE_FLOAT_LDW) begin
+					/*if (instrOneHot[`O_H_FLOAT_LDW]) begin
 						frwe <= 1'b1;
 					end else begin*/
 						rwe <= 1'b1;
 					/*end*/
-					unique case (func3)
+					case (func3)
 						3'b000: begin // BYTE with sign extension
-							unique case (busaddress[1:0])
+							case (busaddress[1:0])
 								2'b11: begin rdin <= {{24{busdata[31]}}, busdata[31:24]}; end
 								2'b10: begin rdin <= {{24{busdata[23]}}, busdata[23:16]}; end
 								2'b01: begin rdin <= {{24{busdata[15]}}, busdata[15:8]}; end
@@ -339,19 +339,19 @@ always @(posedge clock) begin
 							endcase
 						end
 						3'b001: begin // WORD with sign extension
-							unique case (busaddress[1])
+							case (busaddress[1])
 								1'b1: begin rdin <= {{16{busdata[31]}}, busdata[31:16]}; end
 								1'b0: begin rdin <= {{16{busdata[15]}}, busdata[15:0]}; end
 							endcase
 						end
 						3'b010: begin // DWORD
-							/*if (opcode == `OPCODE_FLOAT_LDW)
+							/*if (instrOneHot[`O_H_FLOAT_LDW])
 								fregdata <= busdata[31:0];
 							else*/
 								rdin <= busdata[31:0];
 						end
 						3'b100: begin // BYTE with zero extension
-							unique case (busaddress[1:0])
+							case (busaddress[1:0])
 								2'b11: begin rdin <= {24'd0, busdata[31:24]}; end
 								2'b10: begin rdin <= {24'd0, busdata[23:16]}; end
 								2'b01: begin rdin <= {24'd0, busdata[15:8]}; end
@@ -359,7 +359,7 @@ always @(posedge clock) begin
 							endcase
 						end
 						3'b101: begin // WORD with zero extension
-							unique case (busaddress[1])
+							case (busaddress[1])
 								1'b1: begin rdin <= {16'd0, busdata[31:16]}; end
 								1'b0: begin rdin <= {16'd0, busdata[15:0]}; end
 							endcase
@@ -373,54 +373,70 @@ always @(posedge clock) begin
 				ebreak <= 1'b0;
 				illegalinstruction <= 1'b0;
 
-				case (opcode)
-					`OPCODE_AUPC: begin
+				case (1'b1)
+					instrOneHot[`O_H_AUPC]: begin
 						rwe <= 1'b1;
 						rdin <= immpc;
 					end
-					`OPCODE_LUI: begin
+					instrOneHot[`O_H_LUI]: begin
 						rwe <= 1'b1;
 						rdin <= immed;
 					end
-					`OPCODE_JAL: begin
+					instrOneHot[`O_H_JAL]: begin
 						rwe <= 1'b1;
 						rdin <= pc4;
 						nextPC <= immpc;
 					end
-					`OPCODE_OP, `OPCODE_OP_IMM: begin
+					instrOneHot[`O_H_OP], instrOneHot[`O_H_OP_IMM]: begin
 						rwe <= 1'b1;
 						rdin <= aluout;
 					end
-					`OPCODE_FLOAT_OP: begin
+					instrOneHot[`O_H_FLOAT_OP]: begin
 						// TBD
 					end
-					`OPCODE_FLOAT_MADD, `OPCODE_FLOAT_MSUB, `OPCODE_FLOAT_NMSUB, `OPCODE_FLOAT_NMADD: begin
+					instrOneHot[`O_H_FLOAT_MADD], instrOneHot[`O_H_FLOAT_MSUB], instrOneHot[`O_H_FLOAT_NMSUB], instrOneHot[`O_H_FLOAT_NMADD]: begin
 						// TBD
 					end
-					`OPCODE_FENCE: begin
+					instrOneHot[`O_H_FENCE]: begin
 						// TBD
 					end
-					`OPCODE_SYSTEM: begin
-						unique case (func3)
+					instrOneHot[`O_H_SYSTEM]: begin
+						case (func3)
 							// ECALL/EBREAK
 							3'b000: begin
-								unique case (func12)
-									12'b000000000000: begin // ECALL
+								case (func12)
+									/*12'b0000000_00000: begin // ECALL
 										// TBD:
 										// li a7, SBI_SHUTDOWN // also a0/a1/a2, retval in a0
   										// ecall
-  									end
-									12'b000000000001: begin // EBREAK
+  									end*/
+									12'b0000000_00001: begin // EBREAK
 										ebreak <= CSRReg[`CSR_MIE][3];
 									end
+									/*12'b0000000_00101: begin // WFI
+										// NOOP for single core
+									end
+									12'b0001001_?????: begin // SFENCE.VMA
+										// NOT IMPLEMENTED
+									end*/
 									// privileged instructions
-									12'b001100000010: begin // MRET
+									12'b0011000_00010: begin // MRET
+										// MACHINE MODE
 										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
 										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
 										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
 										CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
 										CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
 										nextPC <= CSRReg[`CSR_MEPC];
+									end
+									/*12'b0001000_00010: begin // SRET
+										// SUPERVISOR MODE NOT IMPLEMENTED
+									end
+									12'b0000000_00010: begin // URET
+										// USER MORE NOT IMPLEMENTED
+									end*/
+									default: begin
+										// All other cases act as NOOP (WFI also drops here)
 									end
 								endcase
 								cpumode[CPU_RETIRE] <= 1'b1;
@@ -437,15 +453,15 @@ always @(posedge clock) begin
 							end
 						endcase
 					end
-					`OPCODE_JALR: begin
+					instrOneHot[`O_H_JALR]: begin
 						rwe <= 1'b1;
 						rdin <= pc4;
 						nextPC <= immreach;
 					end
-					`OPCODE_BRANCH: begin
+					instrOneHot[`O_H_BRANCH]: begin
 						nextPC <= branchpc;
 					end
-					`OPCODE_CUSTOM: begin
+					instrOneHot[`O_H_CUSTOM]: begin
 						// TODO: Some custom extensions will go in here
 					end
 					default: begin

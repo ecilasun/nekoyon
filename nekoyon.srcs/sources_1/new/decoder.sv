@@ -4,7 +4,7 @@
 
 module decoder(
 	input wire [31:0] instruction,		// Raw input instruction
-	output logic [4:0] opcode,			// Current instruction class
+	output wire [18:0] instrOneHot,		// Current instruction class
 	output logic [3:0] aluop,			// Current ALU op
 	output logic [3:0] bluop,			// Current BLU op
 	output logic [2:0] func3,			// Sub-instruction
@@ -19,7 +19,8 @@ module decoder(
 	output logic selectimmedasrval2		// Select rval2 or unpacked integer during EXEC
 );
 
-wire [17:0] instrOneHot = {
+assign instrOneHot = {
+	instruction[6:2]==`OPCODE_CUSTOM ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_OP ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_OP_IMM ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_LUI ? 1'b1:1'b0,
@@ -41,7 +42,6 @@ wire [17:0] instrOneHot = {
 
 always_comb begin
 
-	opcode = instruction[6:2];
 	rs1 = instruction[19:15];
 	rs2 = instruction[24:20];
 	rs3 = instruction[31:27];

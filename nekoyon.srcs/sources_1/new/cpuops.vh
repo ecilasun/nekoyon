@@ -158,6 +158,7 @@
 //`define CSDSP		5'b11110
 
 // ===================== INSTUCTION ONE-HOT======================
+`define O_H_CUSTOM			18
 `define O_H_OP				17
 `define O_H_OP_IMM			16
 `define O_H_LUI				15
