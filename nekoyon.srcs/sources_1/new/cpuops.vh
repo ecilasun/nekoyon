@@ -196,6 +196,7 @@
 `define OPCODE_FLOAT_MSUB   5'b10001 //11 
 `define OPCODE_FLOAT_NMSUB  5'b10010 //11 
 `define OPCODE_FLOAT_NMADD  5'b10011 //11
+`define OPCODE_CACHECONTROL 5'b00010 //11
 
 // ======================== SUBGROUPS ===========================
 `define F3_BEQ		3'b000

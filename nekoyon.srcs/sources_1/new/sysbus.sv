@@ -181,7 +181,8 @@ logic [15:0] ctagin = 16'd0;
 wire [255:0] cdout;
 wire [15:0] ctagout;
 
-// NOTE: 8Kbytes worth of D$ with dirty bits set won't make it to I$ without a FENCE/FENCE.I pair.
+// NOTE: D$ lines with dirty bits set won't make it to I$ without a write back to DDR3
+// (which only happens when tag for the cache line changes in Neko architecture)
 // For now, we keep ifetch set to zero to avoid I$ seeing the wrong values directly from DDR3
 cache IDCache(
 	.clock(cpuclock),

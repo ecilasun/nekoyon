@@ -445,6 +445,16 @@ always @(posedge clock) begin
 					`OPCODE_BRANCH: begin
 						nextPC <= branchpc;
 					end
+					`OPCODE_CACHECONTROL: begin
+						// TODO:
+
+						// cwback <= 1'b1; (D$)     or cinval <= 1'b1; (I$)
+						// line <= rval1[7:0]; (D$) or line <= rval1[7:0]+256;  (I$)
+
+						// func3: 000 -> D$ writeback (write D$[rval1[7:0]].data to DDR3, set .tag[15] = 0)
+						// func3: 001 -> I$ invalidate (I$[rval1[7:0]].tag = 7FFF)
+						// rval1[7:0] -> index of cache line to operate on (0..255, +256 when operating on I$)
+					end
 					default: begin
 						illegalinstruction <= CSRReg[`CSR_MIE][3];
 					end
