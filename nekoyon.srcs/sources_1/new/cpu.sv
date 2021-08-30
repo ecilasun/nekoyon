@@ -459,7 +459,7 @@ always @(posedge clock) begin
 			cpumode[CPU_UPDATECSR]: begin
 				// Stop writes to integer register file
 				rwe <= 1'b0;
-				
+
 				// Write to r/w CSR
 				case(func3)
 					3'b001: begin // CSRRW
@@ -515,16 +515,42 @@ always @(posedge clock) begin
 							CSRReg[`CSR_MSCRATCH] <= illegalinstruction ? instruction : 32'd0; // Store the offending instruction for IEX
 							CSRReg[`CSR_MEPC] <= ebreak ? PC : nextPC; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
 							// Jump to handler
-							// Set up non-vectored branch (always assume CSRReg[`CSR_MTVEC][1:0]==2'b00)
-							PC <= {CSRReg[`CSR_MTVEC][31:2],2'b00};
-							busaddress <= {CSRReg[`CSR_MTVEC][31:2],2'b00};
+							// Set up non-vectored branch if lower 2 bits of MTVEC are 2'b00 (Direct mode)
+							// Set up vectored branch if lower 2 bits of MTVEC are 2'b01 (Vectored mode)
+							case (CSRReg[`CSR_MTVEC][1:0])
+								2'b00: begin
+									// Direct
+									PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+									busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+								end
+								2'b01: begin
+									// Vectored
+									// Exceptions: MTVEC
+									// Interrupts: MTVEC+4*MCAUSE
+									case (1'b1)
+										illegalinstruction, ebreak: begin
+											// Use BASE only
+											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+										end
+										timerinterrupt: begin
+											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C;
+											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C; // 4*7
+										end
+										externalinterrupt: begin
+											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C;
+											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C; // 4*11
+										end
+									endcase
+								end
+							endcase
 						end
 
 						// Set interrupt pending bits
 						// NOTE: illegal instruction and ebreak both create the same machine software interrupt
 						{CSRReg[`CSR_MIP][3], CSRReg[`CSR_MIP][7], CSRReg[`CSR_MIP][11]} <= {illegalinstruction | ebreak, timerinterrupt, externalinterrupt};
 
-						unique case (1'b1)
+						case (1'b1)
 							illegalinstruction, ebreak: begin
 								CSRReg[`CSR_MCAUSE][15:0] <= 16'd3; // Illegal instruction or breakpoint interrupt
 								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 14'd0, illegalinstruction ? 1'b1:1'b0}; // Cause: 0: ebreak 1: illegal instruction
