@@ -183,7 +183,8 @@ wire [15:0] ctagout;
 
 // NOTE: D$ lines with dirty bits set won't make it to I$ without a write back to DDR3
 // (which only happens when tag for the cache line changes in Neko architecture)
-// For now, we keep ifetch set to zero to avoid I$ seeing the wrong values directly from DDR3
+// For now, software will read of first 2048 DWORDs from DDR3 to force writebacks of
+// dirty pages to memory, ensuring I$ can see these when it tries to access them.
 cache IDCache(
 	.clock(cpuclock),
 	.we(cwe),
