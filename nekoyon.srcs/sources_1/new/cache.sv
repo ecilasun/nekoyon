@@ -10,6 +10,10 @@ module cache(
 	output wire [255:0] cdout,
 	output wire [15:0] ctagout );
 
+// Cache ranges:
+// D$: 0..255
+// I$: 256..511
+
 logic [15:0] tags[0:511];
 logic [255:0] lines[0:511];
 

@@ -125,6 +125,12 @@ localparam CMD_WRITE = 3'b000;
 localparam CMD_READ = 3'b001;
 
 // Bus calibration complete trigger
+// NOTE: This is currently unused since
+// we boot from S-RAM and it takes sufficient
+// time to come to the point where we can
+// load an ELF executable to the DDR3,
+// therefore we don't necessarily need to
+// wait for this signal under normal conditions.
 always @ (posedge cpuclock) begin
 	if (calib_done)
 		ddr3ready <= 1'b1;
