@@ -187,7 +187,7 @@ wire [15:0] ctagout;
 cache IDCache(
 	.clock(cpuclock),
 	.we(cwe),
-	.ifetch(1'b0/*ifetch*/),
+	.ifetch(ifetch),
 	.cline(cline),
 	.cdin(cdin),
 	.ctagin(ctagin),
