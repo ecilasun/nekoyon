@@ -14,7 +14,7 @@ module decoder(
 	output logic [4:0] rs2,				// Source register two
 	output logic [4:0] rs3,				// Used by fused multiplyadd/sub
 	output logic [4:0] rd,				// Destination register
-	output logic [11:0] csrindex,		// Index of selected CSR register
+	output logic [4:0] csrindex,		// Index of selected CSR register
 	output logic [31:0] immed,			// Unpacked immediate integer value
 	output logic selectimmedasrval2		// Select rval2 or unpacked integer during EXEC
 );
@@ -41,6 +41,35 @@ assign instrOneHot = {
 	instruction[6:2]==`OPCODE_FLOAT_NMADD ? 1'b1:1'b0 };
 
 always_comb begin
+	case ({instruction[31:25], instruction[24:20]})
+		12'h001: csrindex = `CSR_FFLAGS;
+		12'h002: csrindex = `CSR_FRM;
+		12'h003: csrindex = `CSR_FCSR;
+		12'h300: csrindex = `CSR_MSTATUS;
+		12'h301: csrindex = `CSR_MISA;
+		12'h304: csrindex = `CSR_MIE;
+		12'h305: csrindex = `CSR_MTVEC;
+		12'h340: csrindex = `CSR_MSCRATCH;
+		12'h341: csrindex = `CSR_MEPC;
+		12'h342: csrindex = `CSR_MCAUSE;
+		12'h343: csrindex = `CSR_MTVAL;
+		12'h344: csrindex = `CSR_MIP;
+		12'h780: csrindex = `CSR_DCSR;
+		12'h781: csrindex = `CSR_DPC;
+		12'h800: csrindex = `CSR_TIMECMPLO;
+		12'h801: csrindex = `CSR_TIMECMPHI;
+		12'hB00: csrindex = `CSR_CYCLELO;
+		12'hB80: csrindex = `CSR_CYCLEHI;
+		12'hC01: csrindex = `CSR_TIMELO;
+		12'hC02: csrindex = `CSR_RETILO;
+		12'hC81: csrindex = `CSR_TIMEHI;
+		12'hC82: csrindex = `CSR_RETIHI;
+		12'hF14: csrindex = `CSR_HARTID;
+		default: csrindex = `CSR_UNUSED;
+	endcase
+end
+
+always_comb begin
 
 	rs1 = instruction[19:15];
 	rs2 = instruction[24:20];
@@ -50,7 +79,6 @@ always_comb begin
 	func7 = instruction[31:25];
 	func12 = instruction[31:20];
 	selectimmedasrval2 = instrOneHot[`O_H_OP_IMM];
-	csrindex = {instruction[31:25], instruction[24:20]};
 
 	case (1'b1)
 		instrOneHot[`O_H_OP]: begin

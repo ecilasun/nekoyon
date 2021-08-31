@@ -61,7 +61,7 @@ wire [4:0] rs1;
 wire [4:0] rs2;
 wire [4:0] rs3;
 wire [4:0] rd;
-wire [11:0] csrindex;
+wire [4:0] csrindex;
 wire [31:0] immed;
 wire selectimmedasrval2;
 
@@ -73,7 +73,6 @@ logic [31:0] rdin;
 wire [31:0] aluout;
 wire branchout;
 
-logic [4:0] CSRIndextoLinearIndex;
 logic [31:0] CSRReg [0:24];
 
 logic [63:0] internalcyclecounter = 64'd0;
@@ -86,6 +85,8 @@ logic [63:0] internalretirecounter = 64'd0;
 logic timerinterrupt = 1'b0;
 logic externalinterrupt = 1'b0;
 logic [31:0] mepc = 32'd0;
+logic [31:0] csrread = 32'd0;
+logic [31:0] lastinstruction = 32'd0;
 
 // -----------------------------------------------------------------------
 // Integer register file and misc wires
@@ -187,35 +188,6 @@ initial begin
 	// TODO: marchid: 0x0000_0004
 end
 
-always_comb begin
-	case (csrindex)
-		12'h001: CSRIndextoLinearIndex = `CSR_FFLAGS;
-		12'h002: CSRIndextoLinearIndex = `CSR_FRM;
-		12'h003: CSRIndextoLinearIndex = `CSR_FCSR;
-		12'h300: CSRIndextoLinearIndex = `CSR_MSTATUS;
-		12'h301: CSRIndextoLinearIndex = `CSR_MISA;
-		12'h304: CSRIndextoLinearIndex = `CSR_MIE;
-		12'h305: CSRIndextoLinearIndex = `CSR_MTVEC;
-		12'h340: CSRIndextoLinearIndex = `CSR_MSCRATCH;
-		12'h341: CSRIndextoLinearIndex = `CSR_MEPC;
-		12'h342: CSRIndextoLinearIndex = `CSR_MCAUSE;
-		12'h343: CSRIndextoLinearIndex = `CSR_MTVAL;
-		12'h344: CSRIndextoLinearIndex = `CSR_MIP;
-		12'h780: CSRIndextoLinearIndex = `CSR_DCSR;
-		12'h781: CSRIndextoLinearIndex = `CSR_DPC;
-		12'h800: CSRIndextoLinearIndex = `CSR_TIMECMPLO;
-		12'h801: CSRIndextoLinearIndex = `CSR_TIMECMPHI;
-		12'hB00: CSRIndextoLinearIndex = `CSR_CYCLELO;
-		12'hB80: CSRIndextoLinearIndex = `CSR_CYCLEHI;
-		12'hC01: CSRIndextoLinearIndex = `CSR_TIMELO;
-		12'hC02: CSRIndextoLinearIndex = `CSR_RETILO;
-		12'hC81: CSRIndextoLinearIndex = `CSR_TIMEHI;
-		12'hC82: CSRIndextoLinearIndex = `CSR_RETIHI;
-		12'hF14: CSRIndextoLinearIndex = `CSR_HARTID;
-		default: CSRIndextoLinearIndex = `CSR_UNUSED;
-	endcase
-end
-
 // Other custom CSRs r/w between 0x802-0x8FF
 
 // Advancing cycles is simple since clocks = cycles
@@ -269,6 +241,7 @@ always @(posedge clock) begin
 					cpumode[CPU_FETCH] <= 1'b1;
 				end else begin
 					instruction <= busdata;
+					lastinstruction <= busdata;
 
 					// Trigger interrupts
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
@@ -367,8 +340,7 @@ always @(posedge clock) begin
 						end
 						// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
 						3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin 
-							rwe <= 1'b1;
-							rdin <= CSRReg[CSRIndextoLinearIndex];
+							csrread <= CSRReg[csrindex];
 							cpumode[CPU_UPDATECSR] <= 1'b1;
 						end
 						// Unknown
@@ -478,31 +450,32 @@ always @(posedge clock) begin
 			end
 
 			cpumode[CPU_UPDATECSR]: begin
-				// Stop writes to integer register file
-				rwe <= 1'b0;
+				// Save previous value to destination register
+				rwe <= 1'b1;
+				rdin <= csrread;
 
 				// Write to r/w CSR
 				case(func3)
 					3'b001: begin // CSRRW
-						CSRReg[CSRIndextoLinearIndex] <= rval1;
+						CSRReg[csrindex] <= rval1;
 					end
 					3'b101: begin // CSRRWI
-						CSRReg[CSRIndextoLinearIndex] <= immed;
+						CSRReg[csrindex] <= immed;
 					end
 					3'b010: begin // CSRRS
-						CSRReg[CSRIndextoLinearIndex] <= rdin | rval1;
+						CSRReg[csrindex] <= csrread | rval1;
 					end
 					3'b110: begin // CSRRSI
-						CSRReg[CSRIndextoLinearIndex] <= rdin | immed;
+						CSRReg[csrindex] <= csrread | immed;
 					end
 					3'b011: begin // CSSRRC
-						CSRReg[CSRIndextoLinearIndex] <= rdin & (~rval1);
+						CSRReg[csrindex] <= csrread & (~rval1);
 					end
 					3'b111: begin // CSRRCI
-						CSRReg[CSRIndextoLinearIndex] <= rdin & (~immed);
+						CSRReg[csrindex] <= csrread & (~immed);
 					end
 					default: begin // Unknown
-						CSRReg[CSRIndextoLinearIndex] <= rdin;
+						CSRReg[csrindex] <= csrread;
 					end
 				endcase
 				cpumode[CPU_RETIRE] <= 1'b1;
@@ -512,8 +485,8 @@ always @(posedge clock) begin
 				// Common action in case of 'any' interrupt
 				CSRReg[`CSR_MSTATUS][7] <= CSRReg[`CSR_MSTATUS][3]; // Remember interrupt enable status in pending state (MPIE = MIE)
 				CSRReg[`CSR_MSTATUS][3] <= 1'b0; // Clear interrupts during handler
-				CSRReg[`CSR_MTVAL] <= illegalinstruction ? PC : 32'd0; // Store interrupt/exception specific data (default=0)
-				CSRReg[`CSR_MSCRATCH] <= illegalinstruction ? instruction : 32'd0; // Store the offending instruction for IEX
+				CSRReg[`CSR_MTVAL] <= PC; // Store last known program counter
+				CSRReg[`CSR_MSCRATCH] <= lastinstruction; // Store the offending instruction for IEX
 				CSRReg[`CSR_MEPC] <= mepc; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
 
 				// Jump to handler
@@ -580,7 +553,8 @@ always @(posedge clock) begin
 				// Stop memory reads/writes
 				buswe <= 1'b0;
 				busre <= 1'b0;
-				// End register writes
+
+				// Stop register writes
 				rwe <= 1'b0;
 
 				if (busbusy) begin

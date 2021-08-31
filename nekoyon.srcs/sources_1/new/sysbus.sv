@@ -5,7 +5,7 @@
 module sysbus(
 	// Module control
 	input wire clk10,
-	input wire clk100,
+	input wire spibaseclock,
 	input wire cpuclock,
 	input wire reset,
 	output logic businitialized = 1'b0,
@@ -110,7 +110,7 @@ SPIfifo SDCardWriteFifo(
 	.empty(spiwempty),
 	.dout(spiwdout),
 	.rd_en(spiwre),
-	.rd_clk(clk100),
+	.rd_clk(spibaseclock),
 	.valid(spiwvalid),
 	// Ctl
 	.rst(reset) );
@@ -119,7 +119,7 @@ SPIfifo SDCardWriteFifo(
 logic sddatawe = 1'b0;
 logic [7:0] sddataout = 8'd0;
 logic [1:0] sdqwritestate = 2'b00;
-always @(posedge clk100) begin
+always @(posedge spibaseclock) begin
 
 	spiwre <= 1'b0;
 	sddatawe <= 1'b0;
@@ -156,7 +156,7 @@ SPIfifo SDCardReadFifo(
 	.full(spirfull),
 	.din(spirdin),
 	.wr_en(spirwe),
-	.wr_clk(clk100),
+	.wr_clk(spibaseclock),
 	// Out
 	.empty(spirempty),
 	.dout(spirdout),
@@ -169,7 +169,7 @@ SPIfifo SDCardReadFifo(
 // Push incoming data from SD controller to read queue
 wire [7:0] sddatain;
 wire sddatainready;
-always @(posedge clk100) begin
+always @(posedge spibaseclock) begin
 	spirwe <= 1'b0;
 	if (sddatainready) begin
 		spirwe <= 1'b1;
@@ -178,7 +178,7 @@ always @(posedge clk100) begin
 end
 
 SPI_MASTER SPIMaster(
-        .CLK(clk100),
+        .CLK(spibaseclock),
         .RST(reset),
         // SPI Master
         .SCLK(spi_sck),

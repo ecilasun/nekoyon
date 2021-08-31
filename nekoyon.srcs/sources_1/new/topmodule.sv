@@ -66,7 +66,7 @@ sysbus SystemBus(
 	// Control
 	.cpuclock(cpuclock),
 	.clk10(wallclock),
-	.clk100(spibaseclock),
+	.spibaseclock(spibaseclock),
 	.reset(reset),
 	.businitialized(businitialized),
 	// CPU
