@@ -279,6 +279,9 @@ always @(posedge clock) begin
 					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
 					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
 
+					// Update internal structures with CSRs
+					mepc <= CSRReg[`CSR_MEPC];
+
 					cpumode[CPU_DECODE] <= 1'b1;
 				end
 			end
@@ -348,7 +351,7 @@ always @(posedge clock) begin
 									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
 									CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
 									CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
-									nextPC <= CSRReg[`CSR_MEPC];
+									nextPC <= mepc;
 								end
 								/*12'b0001000_00010: begin // SRET
 									// SUPERVISOR MODE NOT IMPLEMENTED

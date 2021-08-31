@@ -48,10 +48,10 @@ set_property -dict {PACKAGE_PIN A9 IOSTANDARD LVCMOS33} [get_ports uart_txd_in]
 
 ##Pmod Header JC - SDCard interface
 
-#set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { spi_cs_n }]; #IO_L20P_T3_A08_D24_14 Sch=jc_p[1]
-#set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { spi_mosi }]; #IO_L20N_T3_A07_D23_14 Sch=jc_n[1]
-#set_property -dict { PACKAGE_PIN V10   IOSTANDARD LVCMOS33 } [get_ports { spi_miso }]; #IO_L21P_T3_DQS_14 Sch=jc_p[2]
-#set_property -dict { PACKAGE_PIN V11   IOSTANDARD LVCMOS33 } [get_ports { spi_sck }]; #IO_L21N_T3_DQS_A06_D22_14 Sch=jc_n[2]
+set_property -dict { PACKAGE_PIN U12   IOSTANDARD LVCMOS33 } [get_ports { spi_cs_n }]; #IO_L20P_T3_A08_D24_14 Sch=jc_p[1]
+set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { spi_mosi }]; #IO_L20N_T3_A07_D23_14 Sch=jc_n[1]
+set_property -dict { PACKAGE_PIN V10   IOSTANDARD LVCMOS33 } [get_ports { spi_miso }]; #IO_L21P_T3_DQS_14 Sch=jc_p[2]
+set_property -dict { PACKAGE_PIN V11   IOSTANDARD LVCMOS33 } [get_ports { spi_sck }]; #IO_L21N_T3_DQS_A06_D22_14 Sch=jc_n[2]
 # This one counts as a switch in hardware
 #set_property -dict { PACKAGE_PIN T13   IOSTANDARD LVCMOS33 } [get_ports { spi_cd }]; #IO_L23P_T3_A03_D19_14 Sch=jc_p[4]
 

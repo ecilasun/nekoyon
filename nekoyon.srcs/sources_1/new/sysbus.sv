@@ -5,6 +5,7 @@
 module sysbus(
 	// Module control
 	input wire clk10,
+	input wire clk100,
 	input wire cpuclock,
 	input wire reset,
 	output logic businitialized = 1'b0,
@@ -31,7 +32,12 @@ module sysbus(
     inout [1:0] ddr3_dqs_p,
     inout [1:0] ddr3_dqs_n,
     inout [15:0] ddr3_dq,
-    // Interrupts
+    // SPI
+	output wire spi_cs_n,
+	output wire spi_mosi,
+	input wire spi_miso,
+	output wire spi_sck,
+	// Interrupts
 	output wire irqtrigger,
 	output wire [3:0] irqlines,
 	// Bus control
@@ -53,6 +59,7 @@ assign busdata = (|buswe) ? 32'dz : dataout;
 // ----------------------------------------------------------------------------
 
 wire [`DEVICE_COUNT-1:0] deviceSelect = {
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0011 ? 1'b1 : 1'b0,	// 05: 0x8xxxxx0C SPI read/write port					+DEV_SPIRW
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx08 UART read/write port					+DEV_UARTRW
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx04 UART incoming queue byte available	+DEV_UARTBYTEAVAILABLE
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 02: 0x8xxxxx00 UART outgoing queue full				+DEV_UARTSENDFIFOFULL
@@ -81,6 +88,111 @@ uartdriver UARTDevice(
 	.uartrcvempty(uartrcvempty),
 	.uart_rxd_out(uart_rxd_out),
 	.uart_txd_in(uart_txd_in) );
+
+// ----------------------------------------------------------------------------
+// SPI
+// ----------------------------------------------------------------------------
+
+// SD Card Write FIFO
+wire spiwfull, spiwempty, spiwvalid;
+wire [7:0] spiwdout;
+wire sddataoutready;
+logic spiwre = 1'b0;
+logic spiwwe = 1'b0;
+logic [7:0] spiwdin;
+SPIfifo SDCardWriteFifo(
+	// In
+	.full(spiwfull),
+	.din(spiwdin),
+	.wr_en(spiwwe),
+	.wr_clk(cpuclock),
+	// Out
+	.empty(spiwempty),
+	.dout(spiwdout),
+	.rd_en(spiwre),
+	.rd_clk(clk100),
+	.valid(spiwvalid),
+	// Ctl
+	.rst(reset) );
+
+// Pull from write queue and send through SD controller
+logic sddatawe = 1'b0;
+logic [7:0] sddataout = 8'd0;
+logic [1:0] sdqwritestate = 2'b00;
+always @(posedge clk100) begin
+
+	spiwre <= 1'b0;
+	sddatawe <= 1'b0;
+
+	unique case (sdqwritestate)
+		2'b00: begin
+			if ((~spiwempty) & sddataoutready) begin
+				spiwre <= 1'b1;
+				sdqwritestate <= 2'b01;
+			end
+		end
+		2'b01: begin
+			if (spiwvalid) begin
+				sddatawe <= 1'b1;
+				sddataout <= spiwdout;
+				sdqwritestate <= 2'b10;
+			end
+		end
+		2'b10: begin
+			// One clock delay to catch with sddataoutready properly
+			sdqwritestate <= 2'b00;
+		end
+	endcase
+
+end
+
+// SD Card Read FIFO
+wire spirempty, spirfull, spirvalid;
+wire [7:0] spirdout;
+logic [7:0] spirdin = 8'd0;
+logic spirwe = 1'b0, spirre = 1'b0;
+SPIfifo SDCardReadFifo(
+	// In
+	.full(spirfull),
+	.din(spirdin),
+	.wr_en(spirwe),
+	.wr_clk(clk100),
+	// Out
+	.empty(spirempty),
+	.dout(spirdout),
+	.rd_en(spirre),
+	.valid(spirvalid),
+	.rd_clk(cpuclock),
+	// Ctl
+	.rst(reset) );
+
+// Push incoming data from SD controller to read queue
+wire [7:0] sddatain;
+wire sddatainready;
+always @(posedge clk100) begin
+	spirwe <= 1'b0;
+	if (sddatainready) begin
+		spirwe <= 1'b1;
+		spirdin <= sddatain;
+	end
+end
+
+SPI_MASTER SPIMaster(
+        .CLK(clk100),
+        .RST(reset),
+        // SPI Master
+        .SCLK(spi_sck),
+        .CS_N(spi_cs_n),
+        .MOSI(spi_mosi),
+        .MISO(spi_miso),
+        // Output from BUS
+        .DIN_LAST(1'b0),
+        .DIN_RDY(sddataoutready),	// can send now
+        .DIN(sddataout),			// data to send
+        .DIN_VLD(sddatawe),			// data write enable
+        // Input to BUS
+        .DOUT(sddatain),			// data arriving from SPI
+        .DOUT_VLD(sddatainready) );	// data available for read
 
 // ----------------------------------------------------------------------------
 // DDR3
@@ -214,6 +326,7 @@ localparam BUS_DDR3CACHELOADHI = 6;
 localparam BUS_DDR3CACHEWAIT = 7;
 localparam BUS_DDR3UPDATECACHELINE = 8;
 localparam BUS_UPDATEFINALIZE = 9;
+localparam BUS_SPIRETIRE = 10;
 
 wire busactive = busmode != BUS_IDLE;
 assign busbusy = busactive | busre | (|buswe);
@@ -240,6 +353,8 @@ always @(posedge cpuclock) begin
 			BUS_IDLE: begin
 				// Stop cache writes
 				cwe <= 1'b0;
+				// Stop SPI writes
+				spiwwe <= 1'b0;
 
 				if (deviceSelect[`DEV_DDR3] & (busre | (|buswe))) begin
 					currentcacheline <= cdout;
@@ -258,6 +373,8 @@ always @(posedge cpuclock) begin
 				end
 
 				if (|buswe) begin
+					if (deviceSelect[`DEV_SPIRW])
+						spiwdin <= busdata[7:0];
 					busmode <= BUS_WRITE;
 				end else if (busre) begin
 					busmode <= BUS_READ;
@@ -304,6 +421,16 @@ always @(posedge cpuclock) begin
 						deviceSelect[`DEV_SRAM]: begin
 							dataout <= sramdout;
 						end
+						deviceSelect[`DEV_SPIRW]: begin
+							if(~spirempty) begin
+								spirre <= 1'b1;
+								busmode <= BUS_SPIRETIRE;
+							end else begin
+								// Block when no data available
+								// NOTE: SPI can't read without sending a data stream first
+								busmode <= BUS_READ;
+							end
+						end
 						deviceSelect[`DEV_UARTRW],
 						deviceSelect[`DEV_UARTBYTEAVAILABLE],
 						deviceSelect[`DEV_UARTSENDFIFOFULL]: begin
@@ -314,7 +441,6 @@ always @(posedge cpuclock) begin
 			end
 
 			BUS_WRITE: begin
-
 				case(1'b1)
 					deviceSelect[`DEV_DDR3]: begin
 						if (oldtag[14:0] == ctag) begin
@@ -348,10 +474,28 @@ always @(posedge cpuclock) begin
 							end
 						end
 					end
+					deviceSelect[`DEV_SPIRW]: begin
+						if (~spiwfull) begin
+							spiwwe <= 1'b1;
+							busmode <= BUS_IDLE;
+						end else begin
+							busmode <= BUS_WRITE;
+						end
+					end
 					default: begin
 						busmode <= BUS_IDLE;
 					end
 				endcase
+			end
+			
+			BUS_SPIRETIRE: begin
+				spirre <= 1'b0;
+				if (spirvalid) begin
+					dataout <= {spirdout, spirdout, spirdout, spirdout};
+					busmode <= BUS_IDLE;
+				end else begin
+					busmode <= BUS_SPIRETIRE;
+				end
 			end
 
 			BUS_DDR3CACHESTOREHI: begin

@@ -3,6 +3,7 @@
 module clockandresetgen(
 	input wire sys_clock_i,
 	output wire wallclock,
+	output wire spibaseclock,
 	output wire cpuclock,
 	output wire sys_clk_in,
 	output wire ddr3_ref,
@@ -12,6 +13,7 @@ wire clkAlocked, ddr3clklocked;
 
 cpuclockgen CentralClock(
 	.clk_in1(sys_clock_i),
+	.spibaseclock(spibaseclock),
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
 	.locked(clkAlocked) );

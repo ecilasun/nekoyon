@@ -27,17 +27,23 @@ module topmodule(
     output wire [1:0] ddr3_dm,
     inout wire [1:0] ddr3_dqs_p,
     inout wire [1:0] ddr3_dqs_n,
-    inout wire [15:0] ddr3_dq );
+    inout wire [15:0] ddr3_dq,
+    // SPI
+	output wire spi_cs_n,
+	output wire spi_mosi,
+	input wire spi_miso,
+	output wire spi_sck );
 
 // ----------------------------------------------------------------------------
 // Clocks and reset
 // ----------------------------------------------------------------------------
 
-wire wallclock, cpuclock, reset;
+wire wallclock, cpuclock, spibaseclock, reset;
 wire sys_clk_in, ddr3_ref;
 
 clockandresetgen CoreClocksAndReset(
 	.sys_clock_i(sys_clock),
+	.spibaseclock(spibaseclock),
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
 	.sys_clk_in(sys_clk_in),
@@ -60,6 +66,7 @@ sysbus SystemBus(
 	// Control
 	.cpuclock(cpuclock),
 	.clk10(wallclock),
+	.clk100(spibaseclock),
 	.reset(reset),
 	.businitialized(businitialized),
 	// CPU
@@ -85,6 +92,11 @@ sysbus SystemBus(
     .ddr3_dqs_p(ddr3_dqs_p),
     .ddr3_dqs_n(ddr3_dqs_n),
     .ddr3_dq(ddr3_dq),
+    // SPI
+    .spi_cs_n(spi_cs_n),
+	.spi_mosi(spi_mosi),
+	.spi_miso(spi_miso),
+	.spi_sck(spi_sck),
     // Interrupts
 	.irqtrigger(irqtrigger),
 	.irqlines(irqlines),

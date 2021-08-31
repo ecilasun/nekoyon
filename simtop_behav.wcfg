@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="319.166666 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,136.166667 ns"></ZoomEndTime>
-      <Cursor1Time time="1,000.000000 ns"></Cursor1Time>
+      <ZoomStartTime time="0.028333000 us"></ZoomStartTime>
+      <ZoomEndTime time="265.228333001 us"></ZoomEndTime>
+      <Cursor1Time time="49.455000000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="177"></NameColumnWidth>
+      <NameColumnWidth column_width="171"></NameColumnWidth>
       <ValueColumnWidth column_width="97"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="150" />
+   <WVObjectSize size="200" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -41,40 +41,244 @@
       <obj_property name="ObjectShortName">reset</obj_property>
    </wvobject>
    <wvobject fp_name="divider147" type="divider">
-      <obj_property name="label">arbiter</obj_property>
+      <obj_property name="label">SPI</obj_property>
       <obj_property name="DisplayName">label</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBusArbiter/busbusy">
-      <obj_property name="ElementShortName">busbusy</obj_property>
-      <obj_property name="ObjectShortName">busbusy</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBusArbiter/arbusy">
-      <obj_property name="ElementShortName">arbusy</obj_property>
-      <obj_property name="ObjectShortName">arbusy</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/wr_clk">
+      <obj_property name="ElementShortName">wr_clk</obj_property>
+      <obj_property name="ObjectShortName">wr_clk</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/req0">
-      <obj_property name="ElementShortName">req0[4:0]</obj_property>
-      <obj_property name="ObjectShortName">req0[4:0]</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rd_clk">
+      <obj_property name="ElementShortName">rd_clk</obj_property>
+      <obj_property name="ObjectShortName">rd_clk</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/req1">
-      <obj_property name="ElementShortName">req1[4:0]</obj_property>
-      <obj_property name="ObjectShortName">req1[4:0]</obj_property>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/din">
+      <obj_property name="ElementShortName">din[7:0]</obj_property>
+      <obj_property name="ObjectShortName">din[7:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/addr0">
-      <obj_property name="ElementShortName">addr0[31:0]</obj_property>
-      <obj_property name="ObjectShortName">addr0[31:0]</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/wr_en">
+      <obj_property name="ElementShortName">wr_en</obj_property>
+      <obj_property name="ObjectShortName">wr_en</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/addr1">
-      <obj_property name="ElementShortName">addr1[31:0]</obj_property>
-      <obj_property name="ObjectShortName">addr1[31:0]</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rd_en">
+      <obj_property name="ElementShortName">rd_en</obj_property>
+      <obj_property name="ObjectShortName">rd_en</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/reqaddr0">
-      <obj_property name="ElementShortName">reqaddr0[31:0]</obj_property>
-      <obj_property name="ObjectShortName">reqaddr0[31:0]</obj_property>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/dout">
+      <obj_property name="ElementShortName">dout[7:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[7:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBusArbiter/reqaddr1">
-      <obj_property name="ElementShortName">reqaddr1[31:0]</obj_property>
-      <obj_property name="ObjectShortName">reqaddr1[31:0]</obj_property>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/full">
+      <obj_property name="ElementShortName">full</obj_property>
+      <obj_property name="ObjectShortName">full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/empty">
+      <obj_property name="ElementShortName">empty</obj_property>
+      <obj_property name="ObjectShortName">empty</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/valid">
+      <obj_property name="ElementShortName">valid</obj_property>
+      <obj_property name="ObjectShortName">valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/wr_clk">
+      <obj_property name="ElementShortName">wr_clk</obj_property>
+      <obj_property name="ObjectShortName">wr_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rd_clk">
+      <obj_property name="ElementShortName">rd_clk</obj_property>
+      <obj_property name="ObjectShortName">rd_clk</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/din">
+      <obj_property name="ElementShortName">din[7:0]</obj_property>
+      <obj_property name="ObjectShortName">din[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/wr_en">
+      <obj_property name="ElementShortName">wr_en</obj_property>
+      <obj_property name="ObjectShortName">wr_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rd_en">
+      <obj_property name="ElementShortName">rd_en</obj_property>
+      <obj_property name="ObjectShortName">rd_en</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/dout">
+      <obj_property name="ElementShortName">dout[7:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/full">
+      <obj_property name="ElementShortName">full</obj_property>
+      <obj_property name="ObjectShortName">full</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/empty">
+      <obj_property name="ElementShortName">empty</obj_property>
+      <obj_property name="ObjectShortName">empty</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/valid">
+      <obj_property name="ElementShortName">valid</obj_property>
+      <obj_property name="ObjectShortName">valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/CLK">
+      <obj_property name="ElementShortName">CLK</obj_property>
+      <obj_property name="ObjectShortName">CLK</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/RST">
+      <obj_property name="ElementShortName">RST</obj_property>
+      <obj_property name="ObjectShortName">RST</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/SCLK">
+      <obj_property name="ElementShortName">SCLK</obj_property>
+      <obj_property name="ObjectShortName">SCLK</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/CS_N">
+      <obj_property name="ElementShortName">CS_N[0:0]</obj_property>
+      <obj_property name="ObjectShortName">CS_N[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/MOSI">
+      <obj_property name="ElementShortName">MOSI</obj_property>
+      <obj_property name="ObjectShortName">MOSI</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/MISO">
+      <obj_property name="ElementShortName">MISO</obj_property>
+      <obj_property name="ObjectShortName">MISO</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN">
+      <obj_property name="ElementShortName">DIN[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DIN[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_ADDR">
+      <obj_property name="ElementShortName">DIN_ADDR[-1:0]</obj_property>
+      <obj_property name="ObjectShortName">DIN_ADDR[-1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_LAST">
+      <obj_property name="ElementShortName">DIN_LAST</obj_property>
+      <obj_property name="ObjectShortName">DIN_LAST</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_VLD">
+      <obj_property name="ElementShortName">DIN_VLD</obj_property>
+      <obj_property name="ObjectShortName">DIN_VLD</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_RDY">
+      <obj_property name="ElementShortName">DIN_RDY</obj_property>
+      <obj_property name="ObjectShortName">DIN_RDY</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DOUT">
+      <obj_property name="ElementShortName">DOUT[7:0]</obj_property>
+      <obj_property name="ObjectShortName">DOUT[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DOUT_VLD">
+      <obj_property name="ElementShortName">DOUT_VLD</obj_property>
+      <obj_property name="ObjectShortName">DOUT_VLD</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/addr_reg">
+      <obj_property name="ElementShortName">addr_reg[-1:0]</obj_property>
+      <obj_property name="ObjectShortName">addr_reg[-1:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/sys_clk_cnt">
+      <obj_property name="ElementShortName">sys_clk_cnt[2:0]</obj_property>
+      <obj_property name="ObjectShortName">sys_clk_cnt[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/sys_clk_cnt_max">
+      <obj_property name="ElementShortName">sys_clk_cnt_max</obj_property>
+      <obj_property name="ObjectShortName">sys_clk_cnt_max</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/spi_clk">
+      <obj_property name="ElementShortName">spi_clk</obj_property>
+      <obj_property name="ObjectShortName">spi_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/spi_clk_rst">
+      <obj_property name="ElementShortName">spi_clk_rst</obj_property>
+      <obj_property name="ObjectShortName">spi_clk_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/din_last_reg_n">
+      <obj_property name="ElementShortName">din_last_reg_n</obj_property>
+      <obj_property name="ObjectShortName">din_last_reg_n</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/first_edge_en">
+      <obj_property name="ElementShortName">first_edge_en</obj_property>
+      <obj_property name="ObjectShortName">first_edge_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/second_edge_en">
+      <obj_property name="ElementShortName">second_edge_en</obj_property>
+      <obj_property name="ObjectShortName">second_edge_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/chip_select_n">
+      <obj_property name="ElementShortName">chip_select_n</obj_property>
+      <obj_property name="ObjectShortName">chip_select_n</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/load_data">
+      <obj_property name="ElementShortName">load_data</obj_property>
+      <obj_property name="ObjectShortName">load_data</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/miso_reg">
+      <obj_property name="ElementShortName">miso_reg</obj_property>
+      <obj_property name="ObjectShortName">miso_reg</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/shreg">
+      <obj_property name="ElementShortName">shreg[7:0]</obj_property>
+      <obj_property name="ObjectShortName">shreg[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/bit_cnt">
+      <obj_property name="ElementShortName">bit_cnt[2:0]</obj_property>
+      <obj_property name="ObjectShortName">bit_cnt[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/bit_cnt_max">
+      <obj_property name="ElementShortName">bit_cnt_max</obj_property>
+      <obj_property name="ObjectShortName">bit_cnt_max</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/rx_data_vld">
+      <obj_property name="ElementShortName">rx_data_vld</obj_property>
+      <obj_property name="ObjectShortName">rx_data_vld</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/master_ready">
+      <obj_property name="ElementShortName">master_ready</obj_property>
+      <obj_property name="ObjectShortName">master_ready</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/present_state">
+      <obj_property name="ElementShortName">present_state</obj_property>
+      <obj_property name="ObjectShortName">present_state</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/next_state">
+      <obj_property name="ElementShortName">next_state</obj_property>
+      <obj_property name="ObjectShortName">next_state</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/CLK_FREQ">
+      <obj_property name="ElementShortName">CLK_FREQ</obj_property>
+      <obj_property name="ObjectShortName">CLK_FREQ</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/SCLK_FREQ">
+      <obj_property name="ElementShortName">SCLK_FREQ</obj_property>
+      <obj_property name="ObjectShortName">SCLK_FREQ</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WORD_SIZE">
+      <obj_property name="ElementShortName">WORD_SIZE</obj_property>
+      <obj_property name="ObjectShortName">WORD_SIZE</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/SLAVE_COUNT">
+      <obj_property name="ElementShortName">SLAVE_COUNT</obj_property>
+      <obj_property name="ObjectShortName">SLAVE_COUNT</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/DIVIDER_VALUE">
+      <obj_property name="ElementShortName">DIVIDER_VALUE</obj_property>
+      <obj_property name="ObjectShortName">DIVIDER_VALUE</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WIDTH_CLK_CNT">
+      <obj_property name="ElementShortName">WIDTH_CLK_CNT</obj_property>
+      <obj_property name="ObjectShortName">WIDTH_CLK_CNT</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WIDTH_ADDR">
+      <obj_property name="ElementShortName">WIDTH_ADDR</obj_property>
+      <obj_property name="ObjectShortName">WIDTH_ADDR</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/BIT_CNT_WIDTH">
+      <obj_property name="ElementShortName">BIT_CNT_WIDTH</obj_property>
+      <obj_property name="ObjectShortName">BIT_CNT_WIDTH</obj_property>
    </wvobject>
    <wvobject fp_name="divider242" type="divider">
       <obj_property name="label">sysbus</obj_property>
@@ -145,8 +349,8 @@
       <obj_property name="ObjectShortName">sramre</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/deviceSelect">
-      <obj_property name="ElementShortName">deviceSelect[4:0]</obj_property>
-      <obj_property name="ObjectShortName">deviceSelect[4:0]</obj_property>
+      <obj_property name="ElementShortName">deviceSelect[5:0]</obj_property>
+      <obj_property name="ObjectShortName">deviceSelect[5:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/uartreadbusy">
       <obj_property name="ElementShortName">uartreadbusy</obj_property>
@@ -195,10 +399,6 @@
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/dataout">
       <obj_property name="ElementShortName">dataout[31:0]</obj_property>
       <obj_property name="ObjectShortName">dataout[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/opcode">
-      <obj_property name="ElementShortName">opcode[4:0]</obj_property>
-      <obj_property name="ObjectShortName">opcode[4:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/aluop">
       <obj_property name="ElementShortName">aluop[3:0]</obj_property>
@@ -269,8 +469,8 @@
       <obj_property name="ObjectShortName">branchout</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/cpumode">
-      <obj_property name="ElementShortName">cpumode[6:0]</obj_property>
-      <obj_property name="ObjectShortName">cpumode[6:0]</obj_property>
+      <obj_property name="ElementShortName">cpumode[7:0]</obj_property>
+      <obj_property name="ObjectShortName">cpumode[7:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/PC">
       <obj_property name="ElementShortName">PC[31:0]</obj_property>

@@ -2,8 +2,9 @@
 `define CPU_RESET_VECTOR 32'h10000000
 
 // ========================== Devices ===========================
-`define DEVICE_COUNT			5
+`define DEVICE_COUNT			6
 
+`define DEV_SPIRW				5
 `define DEV_UARTRW				4
 `define DEV_UARTBYTEAVAILABLE	3
 `define DEV_UARTSENDFIFOFULL	2
