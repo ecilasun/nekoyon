@@ -185,32 +185,32 @@ initial begin
 	// TODO: marchid: 0x0000_0004
 end
 
-always @(posedge clock) begin
+always_comb begin
 	case (csrindex)
-		12'h001: CSRIndextoLinearIndex <= `CSR_FFLAGS;
-		12'h002: CSRIndextoLinearIndex <= `CSR_FRM;
-		12'h003: CSRIndextoLinearIndex <= `CSR_FCSR;
-		12'h300: CSRIndextoLinearIndex <= `CSR_MSTATUS;
-		12'h301: CSRIndextoLinearIndex <= `CSR_MISA;
-		12'h304: CSRIndextoLinearIndex <= `CSR_MIE;
-		12'h305: CSRIndextoLinearIndex <= `CSR_MTVEC;
-		12'h340: CSRIndextoLinearIndex <= `CSR_MSCRATCH;
-		12'h341: CSRIndextoLinearIndex <= `CSR_MEPC;
-		12'h342: CSRIndextoLinearIndex <= `CSR_MCAUSE;
-		12'h343: CSRIndextoLinearIndex <= `CSR_MTVAL;
-		12'h344: CSRIndextoLinearIndex <= `CSR_MIP;
-		12'h780: CSRIndextoLinearIndex <= `CSR_DCSR;
-		12'h781: CSRIndextoLinearIndex <= `CSR_DPC;
-		12'h800: CSRIndextoLinearIndex <= `CSR_TIMECMPLO;
-		12'h801: CSRIndextoLinearIndex <= `CSR_TIMECMPHI;
-		12'hB00: CSRIndextoLinearIndex <= `CSR_CYCLELO;
-		12'hB80: CSRIndextoLinearIndex <= `CSR_CYCLEHI;
-		12'hC01: CSRIndextoLinearIndex <= `CSR_TIMELO;
-		12'hC02: CSRIndextoLinearIndex <= `CSR_RETILO;
-		12'hC81: CSRIndextoLinearIndex <= `CSR_TIMEHI;
-		12'hC82: CSRIndextoLinearIndex <= `CSR_RETIHI;
-		12'hF14: CSRIndextoLinearIndex <= `CSR_HARTID;
-		default: CSRIndextoLinearIndex <= `CSR_UNUSED;
+		12'h001: CSRIndextoLinearIndex = `CSR_FFLAGS;
+		12'h002: CSRIndextoLinearIndex = `CSR_FRM;
+		12'h003: CSRIndextoLinearIndex = `CSR_FCSR;
+		12'h300: CSRIndextoLinearIndex = `CSR_MSTATUS;
+		12'h301: CSRIndextoLinearIndex = `CSR_MISA;
+		12'h304: CSRIndextoLinearIndex = `CSR_MIE;
+		12'h305: CSRIndextoLinearIndex = `CSR_MTVEC;
+		12'h340: CSRIndextoLinearIndex = `CSR_MSCRATCH;
+		12'h341: CSRIndextoLinearIndex = `CSR_MEPC;
+		12'h342: CSRIndextoLinearIndex = `CSR_MCAUSE;
+		12'h343: CSRIndextoLinearIndex = `CSR_MTVAL;
+		12'h344: CSRIndextoLinearIndex = `CSR_MIP;
+		12'h780: CSRIndextoLinearIndex = `CSR_DCSR;
+		12'h781: CSRIndextoLinearIndex = `CSR_DPC;
+		12'h800: CSRIndextoLinearIndex = `CSR_TIMECMPLO;
+		12'h801: CSRIndextoLinearIndex = `CSR_TIMECMPHI;
+		12'hB00: CSRIndextoLinearIndex = `CSR_CYCLELO;
+		12'hB80: CSRIndextoLinearIndex = `CSR_CYCLEHI;
+		12'hC01: CSRIndextoLinearIndex = `CSR_TIMELO;
+		12'hC02: CSRIndextoLinearIndex = `CSR_RETILO;
+		12'hC81: CSRIndextoLinearIndex = `CSR_TIMEHI;
+		12'hC82: CSRIndextoLinearIndex = `CSR_RETIHI;
+		12'hF14: CSRIndextoLinearIndex = `CSR_HARTID;
+		default: CSRIndextoLinearIndex = `CSR_UNUSED;
 	endcase
 end
 
@@ -267,6 +267,16 @@ always @(posedge clock) begin
 					cpumode[CPU_FETCH] <= 1'b1;
 				end else begin
 					instruction <= busdata;
+
+					// Trigger interrupts
+					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
+					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
+	
+					// Update CSRs with internal counters
+					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
+					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
+					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+
 					cpumode[CPU_DECODE] <= 1'b1;
 				end
 			end
@@ -274,15 +284,9 @@ always @(posedge clock) begin
 			cpumode[CPU_DECODE]: begin
 				nextPC <= pc4;
 				ifetch <= 1'b0;
-
-				// Trigger interrupts
-				timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
-				externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
-
-				// Update CSRs with internal counters
-				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
-				{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
-				{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+				ebreak <= 1'b0;
+				illegalinstruction <= 1'b0;
+				rdin <= 32'd0;
 
 				// Take load or op branch, otherwise process store in-place
 				if (instrOneHot[`O_H_LOAD] | instrOneHot[`O_H_FLOAT_LDW]) begin
@@ -314,6 +318,58 @@ always @(posedge clock) begin
 						end
 					endcase
 					cpumode[CPU_RETIRE] <= 1'b1;
+				end else if (instrOneHot[`O_H_SYSTEM]) begin
+					case (func3)
+						// ECALL/EBREAK
+						3'b000: begin
+							case (func12)
+								/*12'b0000000_00000: begin // ECALL
+									// TBD:
+									// li a7, SBI_SHUTDOWN // also a0/a1/a2, retval in a0
+									// ecall
+								end*/
+								12'b0000000_00001: begin // EBREAK
+									ebreak <= CSRReg[`CSR_MIE][3];
+								end
+								/*12'b0000000_00101: begin // WFI
+									// NOOP for single core
+								end
+								12'b0001001_?????: begin // SFENCE.VMA
+									// NOT IMPLEMENTED
+								end*/
+								// privileged instructions
+								12'b0011000_00010: begin // MRET
+									// MACHINE MODE
+									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
+									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
+									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
+									CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
+									CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
+									nextPC <= CSRReg[`CSR_MEPC];
+								end
+								/*12'b0001000_00010: begin // SRET
+									// SUPERVISOR MODE NOT IMPLEMENTED
+								end
+								12'b0000000_00010: begin // URET
+									// USER MORE NOT IMPLEMENTED
+								end*/
+								default: begin
+									// All other cases act as NOOP (WFI also drops here)
+								end
+							endcase
+							cpumode[CPU_RETIRE] <= 1'b1;
+						end
+						// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
+						3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin 
+							rwe <= 1'b1;
+							rdin <= CSRReg[CSRIndextoLinearIndex];
+							cpumode[CPU_UPDATECSR] <= 1'b1;
+						end
+						// Unknown
+						default: begin
+							cpumode[CPU_RETIRE] <= 1'b1;
+						end
+					endcase
 				end else begin
 					cpumode[CPU_EXEC] <= 1'b1;
 				end
@@ -370,9 +426,6 @@ always @(posedge clock) begin
 			end
 
 			cpumode[CPU_EXEC]: begin
-				ebreak <= 1'b0;
-				illegalinstruction <= 1'b0;
-
 				case (1'b1)
 					instrOneHot[`O_H_AUPC]: begin
 						rwe <= 1'b1;
@@ -400,59 +453,6 @@ always @(posedge clock) begin
 					instrOneHot[`O_H_FENCE]: begin
 						// TBD
 					end
-					instrOneHot[`O_H_SYSTEM]: begin
-						case (func3)
-							// ECALL/EBREAK
-							3'b000: begin
-								case (func12)
-									/*12'b0000000_00000: begin // ECALL
-										// TBD:
-										// li a7, SBI_SHUTDOWN // also a0/a1/a2, retval in a0
-  										// ecall
-  									end*/
-									12'b0000000_00001: begin // EBREAK
-										ebreak <= CSRReg[`CSR_MIE][3];
-									end
-									/*12'b0000000_00101: begin // WFI
-										// NOOP for single core
-									end
-									12'b0001001_?????: begin // SFENCE.VMA
-										// NOT IMPLEMENTED
-									end*/
-									// privileged instructions
-									12'b0011000_00010: begin // MRET
-										// MACHINE MODE
-										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
-										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
-										if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
-										CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
-										CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
-										nextPC <= CSRReg[`CSR_MEPC];
-									end
-									/*12'b0001000_00010: begin // SRET
-										// SUPERVISOR MODE NOT IMPLEMENTED
-									end
-									12'b0000000_00010: begin // URET
-										// USER MORE NOT IMPLEMENTED
-									end*/
-									default: begin
-										// All other cases act as NOOP (WFI also drops here)
-									end
-								endcase
-								cpumode[CPU_RETIRE] <= 1'b1;
-							end
-							// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
-							3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin 
-								rwe <= 1'b1;
-								rdin <= CSRReg[CSRIndextoLinearIndex];
-								cpumode[CPU_UPDATECSR] <= 1'b1;
-							end
-							// Unknown
-							default: begin
-								cpumode[CPU_RETIRE] <= 1'b1;
-							end
-						endcase
-					end
 					instrOneHot[`O_H_JALR]: begin
 						rwe <= 1'b1;
 						rdin <= pc4;
@@ -468,7 +468,6 @@ always @(posedge clock) begin
 						illegalinstruction <= CSRReg[`CSR_MIE][3];
 					end
 				endcase
-
 				cpumode[CPU_RETIRE] <= 1'b1;
 			end
 
