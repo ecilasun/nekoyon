@@ -33,6 +33,7 @@ logic [31:0] PC;
 logic [31:0] nextPC;
 logic [31:0] instruction;
 logic ebreak;
+logic ecall;
 logic illegalinstruction;
 
 localparam CPU_RESET		= 0;
@@ -264,6 +265,7 @@ always @(posedge clock) begin
 				// D$ mode
 				ifetch <= 1'b0;
 				ebreak <= 1'b0;
+				ecall <= 1'b0;
 				illegalinstruction <= 1'b0;
 				rdin <= 32'd0;
 
@@ -302,11 +304,11 @@ always @(posedge clock) begin
 						// ECALL/EBREAK
 						3'b000: begin
 							case (func12)
-								/*12'b0000000_00000: begin // ECALL
-									// TBD:
-									// li a7, SBI_SHUTDOWN // also a0/a1/a2, retval in a0
-									// ecall
-								end*/
+								12'b0000000_00000: begin // ECALL
+									// OS service call
+									// eg: li a7, 93 -> terminate application
+									ecall <= 1'b1;
+								end
 								12'b0000000_00001: begin // EBREAK
 									ebreak <= CSRReg[`CSR_MIE][3];
 								end
@@ -503,7 +505,7 @@ always @(posedge clock) begin
 						// Exceptions: MTVEC
 						// Interrupts: MTVEC+4*MCAUSE
 						case (1'b1)
-							illegalinstruction, ebreak: begin
+							illegalinstruction, ebreak, ecall: begin
 								// Use BASE only
 								PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
 								busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
@@ -523,12 +525,12 @@ always @(posedge clock) begin
 
 				// Set interrupt pending bits
 				// NOTE: illegal instruction and ebreak both create the same machine software interrupt
-				{CSRReg[`CSR_MIP][3], CSRReg[`CSR_MIP][7], CSRReg[`CSR_MIP][11]} <= {illegalinstruction | ebreak, timerinterrupt, externalinterrupt};
+				{CSRReg[`CSR_MIP][3], CSRReg[`CSR_MIP][7], CSRReg[`CSR_MIP][11]} <= {illegalinstruction | ebreak | ecall, timerinterrupt, externalinterrupt};
 
 				case (1'b1)
-					illegalinstruction, ebreak: begin
+					illegalinstruction, ebreak, ecall: begin
 						CSRReg[`CSR_MCAUSE][15:0] <= 16'd3; // Illegal instruction or breakpoint interrupt
-						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 14'd0, illegalinstruction ? 1'b1:1'b0}; // Cause: 0: ebreak 1: illegal instruction
+						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 12'd0, ecall, ebreak, illegalinstruction};
 					end
 					timerinterrupt: begin // NOTE: Time interrupt stays pending until cleared
 						CSRReg[`CSR_MCAUSE][15:0] <= 16'd7; // Timer Interrupt
@@ -566,7 +568,7 @@ always @(posedge clock) begin
 					// Copy CSR states to internal registers
 					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
 
-					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | timerinterrupt | externalinterrupt)) begin
+					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | ecall | timerinterrupt | externalinterrupt)) begin
 						mepc <= ebreak ? PC : nextPC;
 						cpumode[CPU_TRAP] <= 1'b1;
 					end else begin
