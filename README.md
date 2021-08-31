@@ -14,7 +14,7 @@ This version implements the following:
 - Implements the minimal RV32I set of RISC-V architecture (currently clocked at 150MHz)
   - Shortest instruction takes 3 clocks, longest takes 4(+N clocks on cache miss) clocks
 - Most CSRs available for interrupt control / timers / counters
-- 
+- SPI module for SDCard support
 
 ## TODO
 - Bus arbiter
@@ -22,7 +22,6 @@ This version implements the following:
 - Floating point unit
 - Graphics output
 - Audio output
-- SDCard support
 
 ## License
 This is intended as a free IP. Please see the accompanying LICENSE.txt file for license terms.
