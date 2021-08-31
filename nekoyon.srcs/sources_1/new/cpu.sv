@@ -35,15 +35,16 @@ logic [31:0] instruction;
 logic ebreak;
 logic illegalinstruction;
 
-localparam CPU_RESET	 = 0;
-localparam CPU_RETIRE	 = 1;
-localparam CPU_FETCH	 = 2;
-localparam CPU_DECODE	 = 3;
-localparam CPU_EXEC		 = 4;
-localparam CPU_LOAD		 = 5;
-localparam CPU_UPDATECSR = 6;
+localparam CPU_RESET		= 0;
+localparam CPU_RETIRE		= 1;
+localparam CPU_FETCH		= 2;
+localparam CPU_DECODE		= 3;
+localparam CPU_EXEC			= 4;
+localparam CPU_LOAD			= 5;
+localparam CPU_UPDATECSR	= 6;
+localparam CPU_TRAP			= 7;
 
-logic [6:0] cpumode;
+logic [7:0] cpumode;
 
 logic [31:0] immreach;
 logic [31:0] immpc;
@@ -84,6 +85,7 @@ logic timertrigger = 1'b0;
 logic [63:0] internalretirecounter = 64'd0;
 logic timerinterrupt = 1'b0;
 logic externalinterrupt = 1'b0;
+logic [31:0] mepc = 32'd0;
 
 // -----------------------------------------------------------------------
 // Integer register file and misc wires
@@ -148,7 +150,7 @@ always_comb begin
 	immreach = rval1 + immed;
 	immpc = PC + immed;
 	pc4 = PC + 32'd4;
-	branchpc = PC + (branchout ? immed : 32'd4);
+	branchpc = branchout ? (PC + immed) : (PC + 32'd4);
 end
 
 // -----------------------------------------------------------------------
@@ -283,6 +285,7 @@ always @(posedge clock) begin
 
 			cpumode[CPU_DECODE]: begin
 				nextPC <= pc4;
+				// D$ mode
 				ifetch <= 1'b0;
 				ebreak <= 1'b0;
 				illegalinstruction <= 1'b0;
@@ -501,93 +504,100 @@ always @(posedge clock) begin
 				endcase
 				cpumode[CPU_RETIRE] <= 1'b1;
 			end
+			
+			cpumode[CPU_TRAP]: begin
+				// Common action in case of 'any' interrupt
+				CSRReg[`CSR_MSTATUS][7] <= CSRReg[`CSR_MSTATUS][3]; // Remember interrupt enable status in pending state (MPIE = MIE)
+				CSRReg[`CSR_MSTATUS][3] <= 1'b0; // Clear interrupts during handler
+				CSRReg[`CSR_MTVAL] <= illegalinstruction ? PC : 32'd0; // Store interrupt/exception specific data (default=0)
+				CSRReg[`CSR_MSCRATCH] <= illegalinstruction ? instruction : 32'd0; // Store the offending instruction for IEX
+				CSRReg[`CSR_MEPC] <= mepc; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
+
+				// Jump to handler
+				// Set up non-vectored branch if lower 2 bits of MTVEC are 2'b00 (Direct mode)
+				// Set up vectored branch if lower 2 bits of MTVEC are 2'b01 (Vectored mode)
+				case (CSRReg[`CSR_MTVEC][1:0])
+					2'b00: begin
+						// Direct
+						PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+						busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+					end
+					2'b01: begin
+						// Vectored
+						// Exceptions: MTVEC
+						// Interrupts: MTVEC+4*MCAUSE
+						case (1'b1)
+							illegalinstruction, ebreak: begin
+								// Use BASE only
+								PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+								busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
+							end
+							timerinterrupt: begin
+								PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C;
+								busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C; // 4*7
+							end
+							externalinterrupt: begin
+								PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C;
+								busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C; // 4*11
+							end
+						endcase
+					end
+				endcase
+				busre <= 1'b1;
+
+				// Set interrupt pending bits
+				// NOTE: illegal instruction and ebreak both create the same machine software interrupt
+				{CSRReg[`CSR_MIP][3], CSRReg[`CSR_MIP][7], CSRReg[`CSR_MIP][11]} <= {illegalinstruction | ebreak, timerinterrupt, externalinterrupt};
+
+				case (1'b1)
+					illegalinstruction, ebreak: begin
+						CSRReg[`CSR_MCAUSE][15:0] <= 16'd3; // Illegal instruction or breakpoint interrupt
+						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 14'd0, illegalinstruction ? 1'b1:1'b0}; // Cause: 0: ebreak 1: illegal instruction
+					end
+					timerinterrupt: begin // NOTE: Time interrupt stays pending until cleared
+						CSRReg[`CSR_MCAUSE][15:0] <= 16'd7; // Timer Interrupt
+						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 15'd0}; // Type of timer interrupt is set to zero
+					end
+					externalinterrupt: begin
+						CSRReg[`CSR_MCAUSE][15:0] <= 16'd11; // Machine External Interrupt
+						// Device mask (lower 15 bits of upper word)
+						// [11:0]:SWITCHES:SPIRX:UARTRX
+						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 11'd0, irqlines};
+					end
+					default: begin
+						CSRReg[`CSR_MCAUSE][15:0] <= 16'd0; // No interrupt/exception
+						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 15'd0};
+					end
+				endcase
+				
+				cpumode[CPU_FETCH] <= 1'b1;
+			end
 
 			cpumode[CPU_RETIRE]: begin
 				// Stop memory reads/writes
 				buswe <= 1'b0;
 				busre <= 1'b0;
-
 				// End register writes
 				rwe <= 1'b0;
 
 				if (busbusy) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
-					PC <= nextPC;
-					busaddress <= nextPC;
+					// I$ mode
 					ifetch <= 1'b1;
-					busre <= 1'b1;
 
 					// Copy CSR states to internal registers
 					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
 
-					if (CSRReg[`CSR_MSTATUS][3]) begin
-						// Common action in case of 'any' interrupt
-						if (illegalinstruction | ebreak | timerinterrupt | externalinterrupt) begin
-							CSRReg[`CSR_MSTATUS][7] <= CSRReg[`CSR_MSTATUS][3]; // Remember interrupt enable status in pending state (MPIE = MIE)
-							CSRReg[`CSR_MSTATUS][3] <= 1'b0; // Clear interrupts during handler
-							CSRReg[`CSR_MTVAL] <= illegalinstruction ? PC : 32'd0; // Store interrupt/exception specific data (default=0)
-							CSRReg[`CSR_MSCRATCH] <= illegalinstruction ? instruction : 32'd0; // Store the offending instruction for IEX
-							CSRReg[`CSR_MEPC] <= ebreak ? PC : nextPC; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
-							// Jump to handler
-							// Set up non-vectored branch if lower 2 bits of MTVEC are 2'b00 (Direct mode)
-							// Set up vectored branch if lower 2 bits of MTVEC are 2'b01 (Vectored mode)
-							case (CSRReg[`CSR_MTVEC][1:0])
-								2'b00: begin
-									// Direct
-									PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
-									busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
-								end
-								2'b01: begin
-									// Vectored
-									// Exceptions: MTVEC
-									// Interrupts: MTVEC+4*MCAUSE
-									case (1'b1)
-										illegalinstruction, ebreak: begin
-											// Use BASE only
-											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
-											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00};
-										end
-										timerinterrupt: begin
-											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C;
-											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h1C; // 4*7
-										end
-										externalinterrupt: begin
-											PC <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C;
-											busaddress <= {CSRReg[`CSR_MTVEC][31:2], 2'b00} + 32'h2C; // 4*11
-										end
-									endcase
-								end
-							endcase
-						end
-
-						// Set interrupt pending bits
-						// NOTE: illegal instruction and ebreak both create the same machine software interrupt
-						{CSRReg[`CSR_MIP][3], CSRReg[`CSR_MIP][7], CSRReg[`CSR_MIP][11]} <= {illegalinstruction | ebreak, timerinterrupt, externalinterrupt};
-
-						case (1'b1)
-							illegalinstruction, ebreak: begin
-								CSRReg[`CSR_MCAUSE][15:0] <= 16'd3; // Illegal instruction or breakpoint interrupt
-								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 14'd0, illegalinstruction ? 1'b1:1'b0}; // Cause: 0: ebreak 1: illegal instruction
-							end
-							timerinterrupt: begin // NOTE: Time interrupt stays pending until cleared
-								CSRReg[`CSR_MCAUSE][15:0] <= 16'd7; // Timer Interrupt
-								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 15'd0}; // Type of timer interrupt is set to zero
-							end
-							externalinterrupt: begin
-								CSRReg[`CSR_MCAUSE][15:0] <= 16'd11; // Machine External Interrupt
-								// Device mask (lower 15 bits of upper word)
-								// [11:0]:SWITCHES:SPIRX:UARTRX
-								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 11'd0, irqlines};
-							end
-							default: begin
-								CSRReg[`CSR_MCAUSE][15:0] <= 16'd0; // No interrupt/exception
-								CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 15'd0};
-							end
-						endcase
+					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | timerinterrupt | externalinterrupt)) begin
+						mepc <= ebreak ? PC : nextPC;
+						cpumode[CPU_TRAP] <= 1'b1;
+					end else begin
+						PC <= nextPC;
+						busaddress <= nextPC;
+						busre <= 1'b1;
+						cpumode[CPU_FETCH] <= 1'b1;
 					end
-
-					cpumode[CPU_FETCH] <= 1'b1;
 				end
 			end
 
