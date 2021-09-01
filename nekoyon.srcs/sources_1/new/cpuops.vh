@@ -66,16 +66,6 @@
 `define REMU		7'b0110011	// 111  0000001
 
 // ======================== RV32 F (single precision) ===========
-// Memory ops
-`define FLW         7'b0000111    //+
-`define FSW         7'b0100111    //+
-
-// Fused ops
-`define FMADD       7'b1000011    //+
-`define FMSUB       7'b1000111    //+
-`define FNMSUB      7'b1001011    //+
-`define FNMADD      7'b1001111    //+
-
 //                    [31:25]         [24:20]    [14:12]
 // Simple math
 `define FADD        7'b0000000    //+ 

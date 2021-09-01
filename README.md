@@ -16,10 +16,9 @@ This version implements the following:
 - Most CSRs available for interrupt control / timers / counters
 - SPI module for SDCard support
 - Integer math unit (M extension)
+- Floating point unit (F extension)
 
 ## TODO
-- Floating point unit (F extension)
-- Bus arbiter / second core
 - Graphics output
   - Dual V-RAM (scan-out buffers)
   - Vsync
@@ -32,9 +31,12 @@ This version implements the following:
   - Keys
   - LEDs
   - GPIO
+- Bus arbiter / second core
 
 ## License
 This is intended as a free IP. Please see the accompanying LICENSE.txt file for license terms.
 The project includes code from other opensource projects which contain their respective license information
 in the code file. The DDR3 memory interface and FIFOs use Vivado IPs, however do not necessarily depend on
 them and should be portable to use replacement IPs.
+
+Uses https://github.com/taneroksuz/riscv-fpu for the IEEE compliant FPU.
