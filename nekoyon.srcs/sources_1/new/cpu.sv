@@ -35,6 +35,7 @@ logic [31:0] instruction;
 logic ebreak;
 logic ecall;
 logic illegalinstruction;
+logic [31:0] mathresult;
 
 localparam CPU_RESET		= 0;
 localparam CPU_RETIRE		= 1;
@@ -44,8 +45,10 @@ localparam CPU_EXEC			= 4;
 localparam CPU_LOAD			= 5;
 localparam CPU_UPDATECSR	= 6;
 localparam CPU_TRAP			= 7;
+localparam CPU_MSTALL		= 8;
+localparam CPU_WBMRESULT	= 9;
 
-logic [7:0] cpumode;
+logic [9:0] cpumode;
 
 logic [31:0] immreach;
 logic [31:0] immpc;
@@ -74,7 +77,7 @@ logic [31:0] rdin;
 wire [31:0] aluout;
 wire branchout;
 
-logic [31:0] CSRReg [0:24];
+logic [31:0] CSRReg [0:`CSR_REGISTER_COUNT-1];
 
 logic [63:0] internalcyclecounter = 64'd0;
 logic [63:0] internalwallclockcounter = 64'd0;
@@ -156,6 +159,64 @@ always_comb begin
 end
 
 // -----------------------------------------------------------------------
+// Integer mul/div/rem units
+// -----------------------------------------------------------------------
+
+wire mulbusy, divbusy, divbusyu;
+wire [31:0] product;
+wire [31:0] quotient;
+wire [31:0] quotientu;
+wire [31:0] remainder;
+wire [31:0] remainderu;
+
+wire isexecuting = (cpumode[CPU_EXEC]==1'b1) ? 1'b1 : 1'b0;
+wire mulstart = isexecuting & (aluop==`ALU_MUL) & (instrOneHot[`O_H_OP]);
+wire divstart = isexecuting & (aluop==`ALU_DIV | aluop==`ALU_REM) & (instrOneHot[`O_H_OP]);
+
+logic [31:0] dividend = 32'd0;
+logic [31:0] divisor = 32'd1;
+logic [31:0] multiplicand = 32'd0;
+logic [31:0] multiplier = 32'd0;
+
+multiplier themul(
+    .clk(clock),
+    .reset(reset),
+    .start(mulstart),
+    .busy(mulbusy),           // calculation in progress
+    .func3(func3),
+    .multiplicand(multiplicand),
+    .multiplier(multiplier),
+    .product(product) );
+
+DIVU unsigneddivider (
+	.clk(clock),
+	.reset(reset),
+	.start(divstart),		// start signal
+	.busy(divbusyu),		// calculation in progress
+	.dividend(dividend),	// dividend
+	.divisor(divisor),		// divisor
+	.quotient(quotientu),	// result: quotient
+	.remainder(remainderu)	// result: remainer
+);
+
+DIV signeddivider (
+	.clk(clock),
+	.reset(reset),
+	.start(divstart),		// start signal
+	.busy(divbusy),			// calculation in progress
+	.dividend(dividend),		// dividend
+	.divisor(divisor),		// divisor
+	.quotient(quotient),	// result: quotient
+	.remainder(remainder)	// result: remainder
+);
+
+// Start trigger
+wire imathstart = divstart | mulstart;
+
+// Stall status
+wire imathbusy = divbusy | divbusyu | mulbusy;
+
+// -----------------------------------------------------------------------
 // Cycle/Timer/Reti CSRs
 // -----------------------------------------------------------------------
 
@@ -210,7 +271,8 @@ end
 
 // Retired instruction counter
 always @(posedge clock) begin
-	internalretirecounter <= internalretirecounter + {63'd0, cpumode[CPU_RETIRE]};
+	if (cpumode[CPU_RETIRE])
+		internalretirecounter <= internalretirecounter + 64'd1;
 end
 
 // -----------------------------------------------------------------------
@@ -247,7 +309,7 @@ always @(posedge clock) begin
 					// Trigger interrupts
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
 					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
-	
+
 					// Update CSRs with internal counters
 					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
 					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
@@ -307,7 +369,7 @@ always @(posedge clock) begin
 								12'b0000000_00000: begin // ECALL
 									// OS service call
 									// eg: li a7, 93 -> terminate application
-									ecall <= 1'b1;
+									ecall <= CSRReg[`CSR_MIE][3];
 								end
 								12'b0000000_00001: begin // EBREAK
 									ebreak <= CSRReg[`CSR_MIE][3];
@@ -351,6 +413,11 @@ always @(posedge clock) begin
 						end
 					endcase
 				end else begin
+					// Pre-arrange math inputs
+					dividend <= rval1;
+					divisor <= rval2;
+					multiplicand <= rval1;
+					multiplier <= rval2;
 					cpumode[CPU_EXEC] <= 1'b1;
 				end
 			end
@@ -406,6 +473,11 @@ always @(posedge clock) begin
 			end
 
 			cpumode[CPU_EXEC]: begin
+				if ((instrOneHot[`O_H_OP] || instrOneHot[`O_H_OP_IMM]) && imathstart)
+					cpumode[CPU_MSTALL] <= 1'b1;
+				else
+					cpumode[CPU_RETIRE] <= 1'b1;
+
 				case (1'b1)
 					instrOneHot[`O_H_AUPC]: begin
 						rwe <= 1'b1;
@@ -421,8 +493,10 @@ always @(posedge clock) begin
 						nextPC <= immpc;
 					end
 					instrOneHot[`O_H_OP], instrOneHot[`O_H_OP_IMM]: begin
-						rwe <= 1'b1;
-						rdin <= aluout;
+						if (~imathstart) begin
+							rwe <= 1'b1;
+							rdin <= aluout;
+						end
 					end
 					instrOneHot[`O_H_FLOAT_OP]: begin
 						// TBD
@@ -448,6 +522,31 @@ always @(posedge clock) begin
 						illegalinstruction <= CSRReg[`CSR_MIE][3];
 					end
 				endcase
+			end
+			
+			cpumode[CPU_MSTALL]: begin
+				if (imathbusy) begin
+					// Keep stalling while M/D/R units are busy
+					cpumode[CPU_MSTALL] <= 1'b1;
+				end else begin
+					unique case (aluop)
+						`ALU_MUL: begin
+							mathresult <= product;
+						end
+						`ALU_DIV: begin
+							mathresult <= func3==`F3_DIV ? quotient : quotientu;
+						end
+						`ALU_REM: begin
+							mathresult <= func3==`F3_REM ? remainder : remainderu;
+						end
+					endcase
+					cpumode[CPU_WBMRESULT] <= 1'b1;
+				end
+			end
+
+			cpumode[CPU_WBMRESULT]: begin
+				rwe <= 1'b1;
+				rdin <= mathresult;
 				cpumode[CPU_RETIRE] <= 1'b1;
 			end
 

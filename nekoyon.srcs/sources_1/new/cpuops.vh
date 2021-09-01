@@ -269,6 +269,8 @@
 `define ALU_FDIV        5'd3
 
 // ======================== CSR ==============================
+`define CSR_REGISTER_COUNT 24
+
 `define CSR_UNUSED		5'd0
 `define CSR_FFLAGS		5'd1
 `define CSR_FRM			5'd2

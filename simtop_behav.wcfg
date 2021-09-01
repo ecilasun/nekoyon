@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.028333000 us"></ZoomStartTime>
-      <ZoomEndTime time="265.228333001 us"></ZoomEndTime>
-      <Cursor1Time time="49.455000000 us"></Cursor1Time>
+      <ZoomStartTime time="0.045500000 us"></ZoomStartTime>
+      <ZoomEndTime time="108.845500001 us"></ZoomEndTime>
+      <Cursor1Time time="38.341251000 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="171"></NameColumnWidth>
+      <NameColumnWidth column_width="153"></NameColumnWidth>
       <ValueColumnWidth column_width="97"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="200" />
+   <WVObjectSize size="79" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -39,246 +39,6 @@
    <wvobject type="logic" fp_name="/simtop/topinst/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
-   </wvobject>
-   <wvobject fp_name="divider147" type="divider">
-      <obj_property name="label">SPI</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rst">
-      <obj_property name="ElementShortName">rst</obj_property>
-      <obj_property name="ObjectShortName">rst</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/wr_clk">
-      <obj_property name="ElementShortName">wr_clk</obj_property>
-      <obj_property name="ObjectShortName">wr_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rd_clk">
-      <obj_property name="ElementShortName">rd_clk</obj_property>
-      <obj_property name="ObjectShortName">rd_clk</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/din">
-      <obj_property name="ElementShortName">din[7:0]</obj_property>
-      <obj_property name="ObjectShortName">din[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/wr_en">
-      <obj_property name="ElementShortName">wr_en</obj_property>
-      <obj_property name="ObjectShortName">wr_en</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/rd_en">
-      <obj_property name="ElementShortName">rd_en</obj_property>
-      <obj_property name="ObjectShortName">rd_en</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/dout">
-      <obj_property name="ElementShortName">dout[7:0]</obj_property>
-      <obj_property name="ObjectShortName">dout[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/full">
-      <obj_property name="ElementShortName">full</obj_property>
-      <obj_property name="ObjectShortName">full</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/empty">
-      <obj_property name="ElementShortName">empty</obj_property>
-      <obj_property name="ObjectShortName">empty</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardWriteFifo/valid">
-      <obj_property name="ElementShortName">valid</obj_property>
-      <obj_property name="ObjectShortName">valid</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rst">
-      <obj_property name="ElementShortName">rst</obj_property>
-      <obj_property name="ObjectShortName">rst</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/wr_clk">
-      <obj_property name="ElementShortName">wr_clk</obj_property>
-      <obj_property name="ObjectShortName">wr_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rd_clk">
-      <obj_property name="ElementShortName">rd_clk</obj_property>
-      <obj_property name="ObjectShortName">rd_clk</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/din">
-      <obj_property name="ElementShortName">din[7:0]</obj_property>
-      <obj_property name="ObjectShortName">din[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/wr_en">
-      <obj_property name="ElementShortName">wr_en</obj_property>
-      <obj_property name="ObjectShortName">wr_en</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/rd_en">
-      <obj_property name="ElementShortName">rd_en</obj_property>
-      <obj_property name="ObjectShortName">rd_en</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/dout">
-      <obj_property name="ElementShortName">dout[7:0]</obj_property>
-      <obj_property name="ObjectShortName">dout[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/full">
-      <obj_property name="ElementShortName">full</obj_property>
-      <obj_property name="ObjectShortName">full</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/empty">
-      <obj_property name="ElementShortName">empty</obj_property>
-      <obj_property name="ObjectShortName">empty</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardReadFifo/valid">
-      <obj_property name="ElementShortName">valid</obj_property>
-      <obj_property name="ObjectShortName">valid</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/CLK">
-      <obj_property name="ElementShortName">CLK</obj_property>
-      <obj_property name="ObjectShortName">CLK</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/RST">
-      <obj_property name="ElementShortName">RST</obj_property>
-      <obj_property name="ObjectShortName">RST</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/SCLK">
-      <obj_property name="ElementShortName">SCLK</obj_property>
-      <obj_property name="ObjectShortName">SCLK</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/CS_N">
-      <obj_property name="ElementShortName">CS_N[0:0]</obj_property>
-      <obj_property name="ObjectShortName">CS_N[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/MOSI">
-      <obj_property name="ElementShortName">MOSI</obj_property>
-      <obj_property name="ObjectShortName">MOSI</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/MISO">
-      <obj_property name="ElementShortName">MISO</obj_property>
-      <obj_property name="ObjectShortName">MISO</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN">
-      <obj_property name="ElementShortName">DIN[7:0]</obj_property>
-      <obj_property name="ObjectShortName">DIN[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_ADDR">
-      <obj_property name="ElementShortName">DIN_ADDR[-1:0]</obj_property>
-      <obj_property name="ObjectShortName">DIN_ADDR[-1:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_LAST">
-      <obj_property name="ElementShortName">DIN_LAST</obj_property>
-      <obj_property name="ObjectShortName">DIN_LAST</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_VLD">
-      <obj_property name="ElementShortName">DIN_VLD</obj_property>
-      <obj_property name="ObjectShortName">DIN_VLD</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DIN_RDY">
-      <obj_property name="ElementShortName">DIN_RDY</obj_property>
-      <obj_property name="ObjectShortName">DIN_RDY</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/DOUT">
-      <obj_property name="ElementShortName">DOUT[7:0]</obj_property>
-      <obj_property name="ObjectShortName">DOUT[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/DOUT_VLD">
-      <obj_property name="ElementShortName">DOUT_VLD</obj_property>
-      <obj_property name="ObjectShortName">DOUT_VLD</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/addr_reg">
-      <obj_property name="ElementShortName">addr_reg[-1:0]</obj_property>
-      <obj_property name="ObjectShortName">addr_reg[-1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/sys_clk_cnt">
-      <obj_property name="ElementShortName">sys_clk_cnt[2:0]</obj_property>
-      <obj_property name="ObjectShortName">sys_clk_cnt[2:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/sys_clk_cnt_max">
-      <obj_property name="ElementShortName">sys_clk_cnt_max</obj_property>
-      <obj_property name="ObjectShortName">sys_clk_cnt_max</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/spi_clk">
-      <obj_property name="ElementShortName">spi_clk</obj_property>
-      <obj_property name="ObjectShortName">spi_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/spi_clk_rst">
-      <obj_property name="ElementShortName">spi_clk_rst</obj_property>
-      <obj_property name="ObjectShortName">spi_clk_rst</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/din_last_reg_n">
-      <obj_property name="ElementShortName">din_last_reg_n</obj_property>
-      <obj_property name="ObjectShortName">din_last_reg_n</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/first_edge_en">
-      <obj_property name="ElementShortName">first_edge_en</obj_property>
-      <obj_property name="ObjectShortName">first_edge_en</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/second_edge_en">
-      <obj_property name="ElementShortName">second_edge_en</obj_property>
-      <obj_property name="ObjectShortName">second_edge_en</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/chip_select_n">
-      <obj_property name="ElementShortName">chip_select_n</obj_property>
-      <obj_property name="ObjectShortName">chip_select_n</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/load_data">
-      <obj_property name="ElementShortName">load_data</obj_property>
-      <obj_property name="ObjectShortName">load_data</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/miso_reg">
-      <obj_property name="ElementShortName">miso_reg</obj_property>
-      <obj_property name="ObjectShortName">miso_reg</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/shreg">
-      <obj_property name="ElementShortName">shreg[7:0]</obj_property>
-      <obj_property name="ObjectShortName">shreg[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/SDCardController/bit_cnt">
-      <obj_property name="ElementShortName">bit_cnt[2:0]</obj_property>
-      <obj_property name="ObjectShortName">bit_cnt[2:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/bit_cnt_max">
-      <obj_property name="ElementShortName">bit_cnt_max</obj_property>
-      <obj_property name="ObjectShortName">bit_cnt_max</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/rx_data_vld">
-      <obj_property name="ElementShortName">rx_data_vld</obj_property>
-      <obj_property name="ObjectShortName">rx_data_vld</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/SDCardController/master_ready">
-      <obj_property name="ElementShortName">master_ready</obj_property>
-      <obj_property name="ObjectShortName">master_ready</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/present_state">
-      <obj_property name="ElementShortName">present_state</obj_property>
-      <obj_property name="ObjectShortName">present_state</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/next_state">
-      <obj_property name="ElementShortName">next_state</obj_property>
-      <obj_property name="ObjectShortName">next_state</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/CLK_FREQ">
-      <obj_property name="ElementShortName">CLK_FREQ</obj_property>
-      <obj_property name="ObjectShortName">CLK_FREQ</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/SCLK_FREQ">
-      <obj_property name="ElementShortName">SCLK_FREQ</obj_property>
-      <obj_property name="ObjectShortName">SCLK_FREQ</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WORD_SIZE">
-      <obj_property name="ElementShortName">WORD_SIZE</obj_property>
-      <obj_property name="ObjectShortName">WORD_SIZE</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/SLAVE_COUNT">
-      <obj_property name="ElementShortName">SLAVE_COUNT</obj_property>
-      <obj_property name="ObjectShortName">SLAVE_COUNT</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/DIVIDER_VALUE">
-      <obj_property name="ElementShortName">DIVIDER_VALUE</obj_property>
-      <obj_property name="ObjectShortName">DIVIDER_VALUE</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WIDTH_CLK_CNT">
-      <obj_property name="ElementShortName">WIDTH_CLK_CNT</obj_property>
-      <obj_property name="ObjectShortName">WIDTH_CLK_CNT</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/WIDTH_ADDR">
-      <obj_property name="ElementShortName">WIDTH_ADDR</obj_property>
-      <obj_property name="ObjectShortName">WIDTH_ADDR</obj_property>
-   </wvobject>
-   <wvobject type="other" fp_name="/simtop/topinst/SystemBus/SDCardController/BIT_CNT_WIDTH">
-      <obj_property name="ElementShortName">BIT_CNT_WIDTH</obj_property>
-      <obj_property name="ObjectShortName">BIT_CNT_WIDTH</obj_property>
    </wvobject>
    <wvobject fp_name="divider242" type="divider">
       <obj_property name="label">sysbus</obj_property>
@@ -437,8 +197,8 @@
       <obj_property name="ObjectShortName">rd[4:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/csrindex">
-      <obj_property name="ElementShortName">csrindex[11:0]</obj_property>
-      <obj_property name="ObjectShortName">csrindex[11:0]</obj_property>
+      <obj_property name="ElementShortName">csrindex[4:0]</obj_property>
+      <obj_property name="ObjectShortName">csrindex[4:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/immed">
       <obj_property name="ElementShortName">immed[31:0]</obj_property>
@@ -469,12 +229,14 @@
       <obj_property name="ObjectShortName">branchout</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/cpumode">
-      <obj_property name="ElementShortName">cpumode[7:0]</obj_property>
-      <obj_property name="ObjectShortName">cpumode[7:0]</obj_property>
+      <obj_property name="ElementShortName">cpumode[9:0]</obj_property>
+      <obj_property name="ObjectShortName">cpumode[9:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/PC">
       <obj_property name="ElementShortName">PC[31:0]</obj_property>
       <obj_property name="ObjectShortName">PC[31:0]</obj_property>
+      <obj_property name="CustomSignalColor">#FFFF00</obj_property>
+      <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/nextPC">
       <obj_property name="ElementShortName">nextPC[31:0]</obj_property>
@@ -483,6 +245,19 @@
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/instruction">
       <obj_property name="ElementShortName">instruction[31:0]</obj_property>
       <obj_property name="ObjectShortName">instruction[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/internalretirecounter">
+      <obj_property name="ElementShortName">internalretirecounter[63:0]</obj_property>
+      <obj_property name="ObjectShortName">internalretirecounter[63:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider426" type="divider">
+      <obj_property name="label">CSR</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/CSRReg">
+      <obj_property name="ElementShortName">CSRReg[0:23][31:0]</obj_property>
+      <obj_property name="ObjectShortName">CSRReg[0:23][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="divider183" type="divider">
       <obj_property name="label">intregs</obj_property>
@@ -523,262 +298,6 @@
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/registers">
       <obj_property name="ElementShortName">registers[0:31][31:0]</obj_property>
       <obj_property name="ObjectShortName">registers[0:31][31:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="divider105" type="divider">
-      <obj_property name="label">ddr3</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/sys_clk_in">
-      <obj_property name="ElementShortName">sys_clk_in</obj_property>
-      <obj_property name="ObjectShortName">sys_clk_in</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_ref">
-      <obj_property name="ElementShortName">ddr3_ref</obj_property>
-      <obj_property name="ObjectShortName">ddr3_ref</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/cpuclock">
-      <obj_property name="ElementShortName">cpuclock</obj_property>
-      <obj_property name="ObjectShortName">cpuclock</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/reset">
-      <obj_property name="ElementShortName">reset</obj_property>
-      <obj_property name="ObjectShortName">reset</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/calib_done">
-      <obj_property name="ElementShortName">calib_done</obj_property>
-      <obj_property name="ObjectShortName">calib_done</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_reset_n">
-      <obj_property name="ElementShortName">ddr3_reset_n</obj_property>
-      <obj_property name="ObjectShortName">ddr3_reset_n</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_cke">
-      <obj_property name="ElementShortName">ddr3_cke[0:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_cke[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_ck_p">
-      <obj_property name="ElementShortName">ddr3_ck_p[0:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_ck_p[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_ck_n">
-      <obj_property name="ElementShortName">ddr3_ck_n[0:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_ck_n[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_cs_n">
-      <obj_property name="ElementShortName">ddr3_cs_n[0:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_cs_n[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_ras_n">
-      <obj_property name="ElementShortName">ddr3_ras_n</obj_property>
-      <obj_property name="ObjectShortName">ddr3_ras_n</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_cas_n">
-      <obj_property name="ElementShortName">ddr3_cas_n</obj_property>
-      <obj_property name="ObjectShortName">ddr3_cas_n</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_we_n">
-      <obj_property name="ElementShortName">ddr3_we_n</obj_property>
-      <obj_property name="ObjectShortName">ddr3_we_n</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_ba">
-      <obj_property name="ElementShortName">ddr3_ba[2:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_ba[2:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_addr">
-      <obj_property name="ElementShortName">ddr3_addr[13:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_addr[13:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_odt">
-      <obj_property name="ElementShortName">ddr3_odt[0:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_odt[0:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_dm">
-      <obj_property name="ElementShortName">ddr3_dm[1:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_dm[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_dqs_p">
-      <obj_property name="ElementShortName">ddr3_dqs_p[1:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_dqs_p[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_dqs_n">
-      <obj_property name="ElementShortName">ddr3_dqs_n[1:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_dqs_n[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3_dq">
-      <obj_property name="ElementShortName">ddr3_dq[15:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3_dq[15:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3ready">
-      <obj_property name="ElementShortName">ddr3ready</obj_property>
-      <obj_property name="ObjectShortName">ddr3ready</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readvalid">
-      <obj_property name="ElementShortName">ddr3readvalid</obj_property>
-      <obj_property name="ObjectShortName">ddr3readvalid</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readempty">
-      <obj_property name="ElementShortName">ddr3readempty</obj_property>
-      <obj_property name="ObjectShortName">ddr3readempty</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readre">
-      <obj_property name="ElementShortName">ddr3readre</obj_property>
-      <obj_property name="ObjectShortName">ddr3readre</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdwe">
-      <obj_property name="ElementShortName">ddr3cmdwe</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdwe</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdin">
-      <obj_property name="ElementShortName">ddr3cmdin[152:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdin[152:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readout">
-      <obj_property name="ElementShortName">ddr3readout[127:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3readout[127:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdre">
-      <obj_property name="ElementShortName">ddr3cmdre</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdre</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdfull">
-      <obj_property name="ElementShortName">ddr3cmdfull</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdfull</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdempty">
-      <obj_property name="ElementShortName">ddr3cmdempty</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdempty</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdvalid">
-      <obj_property name="ElementShortName">ddr3cmdvalid</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdvalid</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3cmdout">
-      <obj_property name="ElementShortName">ddr3cmdout[152:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3cmdout[152:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/device_temp">
-      <obj_property name="ElementShortName">device_temp[11:0]</obj_property>
-      <obj_property name="ObjectShortName">device_temp[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_addr">
-      <obj_property name="ElementShortName">app_addr[27:0]</obj_property>
-      <obj_property name="ObjectShortName">app_addr[27:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_cmd">
-      <obj_property name="ElementShortName">app_cmd[2:0]</obj_property>
-      <obj_property name="ObjectShortName">app_cmd[2:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_en">
-      <obj_property name="ElementShortName">app_en</obj_property>
-      <obj_property name="ObjectShortName">app_en</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_rdy">
-      <obj_property name="ElementShortName">app_rdy</obj_property>
-      <obj_property name="ObjectShortName">app_rdy</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_wdf_data">
-      <obj_property name="ElementShortName">app_wdf_data[127:0]</obj_property>
-      <obj_property name="ObjectShortName">app_wdf_data[127:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_wdf_wren">
-      <obj_property name="ElementShortName">app_wdf_wren</obj_property>
-      <obj_property name="ObjectShortName">app_wdf_wren</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_wdf_rdy">
-      <obj_property name="ElementShortName">app_wdf_rdy</obj_property>
-      <obj_property name="ObjectShortName">app_wdf_rdy</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_rd_data">
-      <obj_property name="ElementShortName">app_rd_data[127:0]</obj_property>
-      <obj_property name="ObjectShortName">app_rd_data[127:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_rd_data_end">
-      <obj_property name="ElementShortName">app_rd_data_end</obj_property>
-      <obj_property name="ObjectShortName">app_rd_data_end</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_rd_data_valid">
-      <obj_property name="ElementShortName">app_rd_data_valid</obj_property>
-      <obj_property name="ObjectShortName">app_rd_data_valid</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_sr_req">
-      <obj_property name="ElementShortName">app_sr_req</obj_property>
-      <obj_property name="ObjectShortName">app_sr_req</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_ref_req">
-      <obj_property name="ElementShortName">app_ref_req</obj_property>
-      <obj_property name="ObjectShortName">app_ref_req</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_zq_req">
-      <obj_property name="ElementShortName">app_zq_req</obj_property>
-      <obj_property name="ObjectShortName">app_zq_req</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_sr_active">
-      <obj_property name="ElementShortName">app_sr_active</obj_property>
-      <obj_property name="ObjectShortName">app_sr_active</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_ref_ack">
-      <obj_property name="ElementShortName">app_ref_ack</obj_property>
-      <obj_property name="ObjectShortName">app_ref_ack</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/app_zq_ack">
-      <obj_property name="ElementShortName">app_zq_ack</obj_property>
-      <obj_property name="ObjectShortName">app_zq_ack</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readfull">
-      <obj_property name="ElementShortName">ddr3readfull</obj_property>
-      <obj_property name="ObjectShortName">ddr3readfull</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readwe">
-      <obj_property name="ElementShortName">ddr3readwe</obj_property>
-      <obj_property name="ObjectShortName">ddr3readwe</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3readin">
-      <obj_property name="ElementShortName">ddr3readin[127:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3readin[127:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ui_clk">
-      <obj_property name="ElementShortName">ui_clk</obj_property>
-      <obj_property name="ObjectShortName">ui_clk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/DDR3Device/ui_clk_sync_rst">
-      <obj_property name="ElementShortName">ui_clk_sync_rst</obj_property>
-      <obj_property name="ObjectShortName">ui_clk_sync_rst</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/DDR3Device/ddr3uistate">
-      <obj_property name="ElementShortName">ddr3uistate[2:0]</obj_property>
-      <obj_property name="ObjectShortName">ddr3uistate[2:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="divider567" type="divider">
-      <obj_property name="label">cachedriver</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/ctag">
-      <obj_property name="ElementShortName">ctag[14:0]</obj_property>
-      <obj_property name="ObjectShortName">ctag[14:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/cline">
-      <obj_property name="ElementShortName">cline[7:0]</obj_property>
-      <obj_property name="ObjectShortName">cline[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/coffset">
-      <obj_property name="ElementShortName">coffset[2:0]</obj_property>
-      <obj_property name="ObjectShortName">coffset[2:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/cwidemask">
-      <obj_property name="ElementShortName">cwidemask[31:0]</obj_property>
-      <obj_property name="ObjectShortName">cwidemask[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/oldtag">
-      <obj_property name="ElementShortName">oldtag[15:0]</obj_property>
-      <obj_property name="ObjectShortName">oldtag[15:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/loadindex">
-      <obj_property name="ElementShortName">loadindex</obj_property>
-      <obj_property name="ObjectShortName">loadindex</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/currentcacheline">
-      <obj_property name="ElementShortName">currentcacheline[255:0]</obj_property>
-      <obj_property name="ObjectShortName">currentcacheline[255:0]</obj_property>
    </wvobject>
    <wvobject fp_name="divider421" type="divider">
       <obj_property name="label">I/DCache</obj_property>

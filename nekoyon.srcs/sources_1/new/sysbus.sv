@@ -309,6 +309,7 @@ cache IDCache(
 
 logic loadindex = 1'b0;
 logic [255:0] currentcacheline;
+logic [14:0] ctagreg;
 
 // -----------------------------------------------------------------------
 // Bus state machine
@@ -363,6 +364,7 @@ always @(posedge cpuclock) begin
 					ctagin <= ctagout;
 					cwidemask <= {{8{buswe[3]}}, {8{buswe[2]}}, {8{buswe[1]}}, {8{buswe[0]}}};
 					ddr3wdat <= busdata;
+					ctagreg <= ctag;
 				end else begin
 					currentcacheline <= 256'd0;
 					oldtag <= 16'd0;
@@ -370,6 +372,7 @@ always @(posedge cpuclock) begin
 					ctagin <= 16'd0;
 					cwidemask <= 32'd0;
 					ddr3wdat <= 32'd0;
+					ctagreg <= 15'd0;
 				end
 
 				if (|buswe) begin
@@ -391,7 +394,7 @@ always @(posedge cpuclock) begin
 					busmode <= BUS_IDLE;
 					case (1'b1)
 						deviceSelect[`DEV_DDR3]: begin
-							if (oldtag[14:0] == ctag) begin
+							if (oldtag[14:0] == ctagreg) begin
 								case (coffset)
 									3'b000: dataout <= currentcacheline[31:0];
 									3'b001: dataout <= currentcacheline[63:32];
@@ -412,7 +415,7 @@ always @(posedge cpuclock) begin
 									busmode <= BUS_DDR3CACHESTOREHI;
 								end else begin
 									// Load contents to new address, discarding current cache line (either evicted or discarded)
-									ddr3cmdin <= {1'b0, ctag, cline, 1'b0, 128'd0};
+									ddr3cmdin <= {1'b0, ctagreg, cline, 1'b0, 128'd0};
 									ddr3cmdwe <= 1'b1;
 									busmode <= BUS_DDR3CACHELOADHI;
 								end
@@ -443,7 +446,7 @@ always @(posedge cpuclock) begin
 			BUS_WRITE: begin
 				case(1'b1)
 					deviceSelect[`DEV_DDR3]: begin
-						if (oldtag[14:0] == ctag) begin
+						if (oldtag[14:0] == ctagreg) begin
 							cwe <= 1'b1;
 							case (coffset)
 								3'b000: cdin[31:0] <= ((~cwidemask)&currentcacheline[31:0]) | (cwidemask&ddr3wdat);
@@ -468,7 +471,7 @@ always @(posedge cpuclock) begin
 								busmode <= BUS_DDR3CACHESTOREHI;
 							end else begin
 								// Load contents to new address, discarding current cache line (either evicted or discarded)
-								ddr3cmdin <= {1'b0, ctag, cline, 1'b0, 128'd0};
+								ddr3cmdin <= {1'b0, ctagreg, cline, 1'b0, 128'd0};
 								ddr3cmdwe <= 1'b1;
 								busmode <= BUS_DDR3CACHELOADHI;
 							end
@@ -505,13 +508,13 @@ always @(posedge cpuclock) begin
 			end
 
 			BUS_DDR3CACHELOADLO: begin
-				ddr3cmdin <= {1'b0, ctag, cline, 1'b0, 128'd0}; // LOADLO
+				ddr3cmdin <= {1'b0, ctagreg, cline, 1'b0, 128'd0}; // LOADLO
 				ddr3cmdwe <= 1'b1;
 				busmode <= BUS_DDR3CACHELOADHI;
 			end
 
 			BUS_DDR3CACHELOADHI: begin
-				ddr3cmdin <= {1'b0, ctag, cline, 1'b1, 128'd0}; // LOADHI
+				ddr3cmdin <= {1'b0, ctagreg, cline, 1'b1, 128'd0}; // LOADHI
 				ddr3cmdwe <= 1'b1;
 				loadindex <= 1'b0;
 				busmode <= BUS_DDR3CACHEWAIT;
@@ -553,8 +556,8 @@ always @(posedge cpuclock) begin
 
 			BUS_UPDATEFINALIZE: begin
 				cdin <= currentcacheline;
-				ctagin <= {1'b0, ctag};
-				oldtag <= {1'b0, ctag};
+				ctagin <= {1'b0, ctagreg};
+				oldtag <= {1'b0, ctagreg};
 				if (ddr3rw == 1'b0) begin
 					cwe <= 1'b1; // Do not forget to update cache
 					busmode <= BUS_READ; // Back to read
