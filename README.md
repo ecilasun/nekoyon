@@ -15,13 +15,23 @@ This version implements the following:
   - Shortest instruction takes 3 clocks, longest takes 4(+N clocks on cache miss) clocks
 - Most CSRs available for interrupt control / timers / counters
 - SPI module for SDCard support
+- Integer math unit (M extension)
 
 ## TODO
-- Bus arbiter
-- Second core
-- Floating point unit
+- Floating point unit (F extension)
+- Bus arbiter / second core
 - Graphics output
+  - Dual V-RAM (scan-out buffers)
+  - Vsync
+  - Command FIFO
+  - Graphics memory (G-RAM, large enough for at least one back buffer)
+  - DMA unit from G-RAM
 - Audio output
+  - Self-timing stereo output FIFO
+- Hardware I/O
+  - Keys
+  - LEDs
+  - GPIO
 
 ## License
 This is intended as a free IP. Please see the accompanying LICENSE.txt file for license terms.
