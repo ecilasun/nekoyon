@@ -98,7 +98,6 @@ logic timerinterrupt = 1'b0;
 logic externalinterrupt = 1'b0;
 logic [31:0] mepc = 32'd0;
 logic [31:0] csrread = 32'd0;
-logic [31:0] lastinstruction = 32'd0;
 
 // -----------------------------------------------------------------------
 // Integer register file
@@ -528,7 +527,6 @@ always @(posedge clock) begin
 					cpumode[CPU_FETCH] <= 1'b1;
 				end else begin
 					instruction <= busdata;
-					lastinstruction <= busdata;
 
 					// Trigger interrupts
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
@@ -538,9 +536,6 @@ always @(posedge clock) begin
 					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
 					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
 					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
-
-					// Update internal structures with CSRs
-					mepc <= CSRReg[`CSR_MEPC];
 
 					cpumode[CPU_DECODE] <= 1'b1;
 				end
@@ -994,13 +989,13 @@ always @(posedge clock) begin
 				endcase
 				cpumode[CPU_RETIRE] <= 1'b1;
 			end
-			
+
 			cpumode[CPU_TRAP]: begin
 				// Common action in case of 'any' interrupt
 				CSRReg[`CSR_MSTATUS][7] <= CSRReg[`CSR_MSTATUS][3]; // Remember interrupt enable status in pending state (MPIE = MIE)
 				CSRReg[`CSR_MSTATUS][3] <= 1'b0; // Clear interrupts during handler
 				CSRReg[`CSR_MTVAL] <= PC; // Store last known program counter
-				CSRReg[`CSR_MSCRATCH] <= lastinstruction; // Store the offending instruction for IEX
+				CSRReg[`CSR_MSCRATCH] <= 32'd0; //instruction; // Store the offending instruction for IEX (NOTE: CPU can read it form address in CSR_MTVAL instead)
 				CSRReg[`CSR_MEPC] <= mepc; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
 
 				// Jump to handler
@@ -1059,7 +1054,7 @@ always @(posedge clock) begin
 						CSRReg[`CSR_MCAUSE][31:16] <= {1'b1, 15'd0};
 					end
 				endcase
-				
+
 				cpumode[CPU_FETCH] <= 1'b1;
 			end
 

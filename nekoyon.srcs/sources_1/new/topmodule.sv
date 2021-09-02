@@ -38,7 +38,7 @@ module topmodule(
 // Clocks and reset
 // ----------------------------------------------------------------------------
 
-wire wallclock, cpuclock, spibaseclock, reset;
+wire wallclock, cpuclock, gpuclock, spibaseclock, reset;
 wire sys_clk_in, ddr3_ref;
 
 clockandresetgen CoreClocksAndReset(
@@ -46,6 +46,7 @@ clockandresetgen CoreClocksAndReset(
 	.spibaseclock(spibaseclock),
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
+	.gpuclock(gpuclock),
 	.sys_clk_in(sys_clk_in),
 	.ddr3_ref(ddr3_ref),
 	.devicereset(reset) );
@@ -65,7 +66,8 @@ wire [3:0] irqlines;
 sysbus SystemBus(
 	// Control
 	.cpuclock(cpuclock),
-	.clk10(wallclock),
+	.gpuclock(gpuclock),
+	.wallclock(wallclock),
 	.spibaseclock(spibaseclock),
 	.reset(reset),
 	.businitialized(businitialized),

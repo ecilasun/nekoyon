@@ -4,9 +4,10 @@
 
 module sysbus(
 	// Module control
-	input wire clk10,
+	input wire wallclock,
 	input wire spibaseclock,
 	input wire cpuclock,
+	input wire gpuclock,
 	input wire reset,
 	output logic businitialized = 1'b0,
 	// CPU
@@ -59,10 +60,11 @@ assign busdata = (|buswe) ? 32'dz : dataout;
 // ----------------------------------------------------------------------------
 
 wire [`DEVICE_COUNT-1:0] deviceSelect = {
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0011 ? 1'b1 : 1'b0,	// 05: 0x8xxxxx0C SPI read/write port					+DEV_SPIRW
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx08 UART read/write port					+DEV_UARTRW
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx04 UART incoming queue byte available	+DEV_UARTBYTEAVAILABLE
-	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 02: 0x8xxxxx00 UART outgoing queue full				+DEV_UARTSENDFIFOFULL
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0011 ? 1'b1 : 1'b0,	// 06: 0x8xxxxx0C SPI read/write port					+DEV_SPIRW
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 05: 0x8xxxxx08 UART read/write port					+DEV_UARTRW
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx04 UART incoming queue byte available	+DEV_UARTBYTEAVAILABLE
+	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx00 UART outgoing queue full				+DEV_UARTSENDFIFOFULL
+	(busaddress[31:28]==4'b0010) ? 1'b1 : 1'b0,							// 02: 0x20000000 - 0x2FFFFFFF - G-RAM (64Kbytes)		+DEV_GRAM
 	(busaddress[31:28]==4'b0001) ? 1'b1 : 1'b0,							// 01: 0x10000000 - 0x1FFFFFFF - S-RAM (64Kbytes)		+DEV_SRAM
 	(busaddress[31:28]==4'b0000) ? 1'b1 : 1'b0							// 00: 0x00000000 - 0x0FFFFFFF - DDR3 (256Mbytes)		+DEV_DDR3
 };
@@ -77,7 +79,7 @@ wire uartreadbusy, uartrcvempty;
 
 uartdriver UARTDevice(
 	.deviceSelect(deviceSelect),
-	.clk10(clk10),
+	.clk10(wallclock),
 	.cpuclock(cpuclock),
 	.reset(reset),
 	.buswe(uartwe),
@@ -240,7 +242,7 @@ ddr3driver DDR3Device(
 	.ddr3readout(ddr3readout) );
 
 // ----------------------------------------------------------------------------
-// S-RAM (also acts as boot ROM)
+// S-RAM (64Kbytes, also acts as boot ROM, and contains the default stack)
 // ----------------------------------------------------------------------------
 
 wire sramre = deviceSelect[`DEV_SRAM] ? busre : 1'b0;
@@ -256,6 +258,51 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 	.douta(sramdout),
 	.ena(deviceSelect[`DEV_SRAM] & (sramre | (|sramwe))),
 	.wea(sramwe) );
+
+// ----------------------------------------------------------------------------
+// GPU
+// ----------------------------------------------------------------------------
+
+wire gpu_gramre;
+wire [3:0] gpu_gramwe;
+wire [31:0] gpu_gramdin;
+wire [13:0] gpu_gramaddr;
+wire [31:0] gpu_gramdout;
+
+gpu GPUDevice(
+	.clock(gpuclock),
+	.reset(reset),
+	.gramre(gpu_gramre),
+	.gramwe(gpu_gramwe),
+	.gramdin(gpu_gramdin),
+	.gramaddr(gpu_gramaddr),
+	.gramdout(gpu_gramdout) );
+
+// -----------------------------------------------------------------------
+// G-RAM (128Kbytes)
+// -----------------------------------------------------------------------
+
+wire gramre = deviceSelect[`DEV_GRAM] ? busre : 1'b0;
+wire [3:0] gramwe = deviceSelect[`DEV_GRAM] ? buswe : 4'h0;
+wire [31:0] gramdin = deviceSelect[`DEV_GRAM] ? busdata : 32'd0;
+wire [13:0] gramaddr = deviceSelect[`DEV_GRAM] ? busaddress[15:2] : 0;
+wire [31:0] gramdout;
+
+gpumemory GRAM(
+	// Port A: CPU access
+	.clka(cpuclock),
+	.addra(gramaddr),
+	.dina(gramdin),
+	.douta(gramdout),
+	.ena(deviceSelect[`DEV_GRAM] & (gramre | (|gramwe))),
+	.wea(gramwe),
+	// Port B: GPU access
+	.clkb(gpuclock),
+	.addrb(gpu_gramaddr),
+	.dinb(gpu_gramdin),
+	.doutb(gpu_gramdout),
+	.enb(gpu_gramre | (|gpu_gramwe)),
+	.web(gpu_gramwe) );
 
 // ----------------------------------------------------------------------------
 // External interrupts
@@ -423,6 +470,9 @@ always @(posedge cpuclock) begin
 						end
 						deviceSelect[`DEV_SRAM]: begin
 							dataout <= sramdout;
+						end
+						deviceSelect[`DEV_GRAM]: begin
+							dataout <= gramdout;
 						end
 						deviceSelect[`DEV_SPIRW]: begin
 							if(~spirempty) begin

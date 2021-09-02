@@ -13,16 +13,16 @@ module registerfile(
 logic [31:0] registers[0:31];
 
 initial begin
-	registers[0] <= 32'h00000000; // Zero register
-	registers[1] <= 32'h00000000; // Default return address 
-	registers[2] <= 32'h20007FF0; // Default stack pointer at bottom of ARAM (32Kbytes), grows upwards
-	registers[3] <= 32'h00000000;
-	registers[4] <= 32'h00000000;
-	registers[5] <= 32'h00000000;
-	registers[6] <= 32'h00000000;
-	registers[7] <= 32'h00000000;
-	registers[8] <= 32'h00000000;
-	registers[9] <= 32'h00000000;
+	registers[0]  <= 32'h00000000; // Zero register
+	registers[1]  <= 32'h00000000; // Default return address 
+	registers[2]  <= 32'h1000FFF0; // Default stack pointer at bottom of S-RAM (64Kbytes), grows upwards
+	registers[3]  <= 32'h00000000;
+	registers[4]  <= 32'h00000000;
+	registers[5]  <= 32'h00000000;
+	registers[6]  <= 32'h00000000;
+	registers[7]  <= 32'h00000000;
+	registers[8]  <= 32'h00000000;
+	registers[9]  <= 32'h00000000;
 	registers[10] <= 32'h00000000;
 	registers[11] <= 32'h00000000;
 	registers[12] <= 32'h00000000;

@@ -15,16 +15,16 @@ module floatregisterfile(
 logic [31:0] registers[0:31]; 
 
 initial begin
-	registers[0] <= 32'h00000000;
-	registers[1] <= 32'h00000000; 
-	registers[2] <= 32'h00000000;
-	registers[3] <= 32'h00000000;
-	registers[4] <= 32'h00000000;
-	registers[5] <= 32'h00000000;
-	registers[6] <= 32'h00000000;
-	registers[7] <= 32'h00000000;
-	registers[8] <= 32'h00000000;
-	registers[9] <= 32'h00000000;
+	registers[0]  <= 32'h00000000;
+	registers[1]  <= 32'h00000000; 
+	registers[2]  <= 32'h00000000;
+	registers[3]  <= 32'h00000000;
+	registers[4]  <= 32'h00000000;
+	registers[5]  <= 32'h00000000;
+	registers[6]  <= 32'h00000000;
+	registers[7]  <= 32'h00000000;
+	registers[8]  <= 32'h00000000;
+	registers[9]  <= 32'h00000000;
 	registers[10] <= 32'h00000000;
 	registers[11] <= 32'h00000000;
 	registers[12] <= 32'h00000000;
