@@ -306,14 +306,17 @@ wire [11:0] video_x;
 wire [11:0] video_y;
 
 wire videopage;
-wire [7:0] PALETTEINDEX_ONE;
-wire [7:0] PALETTEINDEX_TWO;
+wire [7:0] palette0;
+wire [7:0] palette1;
 
-wire dataEnableA, dataEnableB;
-wire inDisplayWindowA, inDisplayWindowB;
+wire dataEnable0, dataEnable1;
+wire inDisplayWindow0, inDisplayWindow1;
 wire [12:0] gpu_lanemask;
 
-VideoControllerGen VMEMUnitA(
+// when video page == 0, output comes from page 1
+// when video page == 1, output comes from page 0
+
+VideoControllerGen VMEMPage0(
 	.gpuclock(gpuclock),
 	.vgaclock(videoclock),
 	.writesenabled(~videopage), // high when page==0
@@ -325,11 +328,11 @@ VideoControllerGen VMEMUnitA(
 	.writeword(gpu_vramdin),
 	.lanemask(gpu_lanemask),
 	// Video output
-	.paletteindex(PALETTEINDEX_ONE),
-	.dataEnable(dataEnableA),
-	.inDisplayWindow(inDisplayWindowA) );
+	.paletteindex(palette0),
+	.dataEnable(dataEnable0),
+	.inDisplayWindow(inDisplayWindow0) );
 
-VideoControllerGen VMEMUnitB(
+VideoControllerGen VMEMPage1(
 	.gpuclock(gpuclock),
 	.vgaclock(videoclock),
 	.writesenabled(videopage), // high when page!=0
@@ -341,25 +344,25 @@ VideoControllerGen VMEMUnitB(
 	.writeword(gpu_vramdin),
 	.lanemask(gpu_lanemask),
 	// Video output
-	.paletteindex(PALETTEINDEX_TWO),
-	.dataEnable(dataEnableB),
-	.inDisplayWindow(inDisplayWindowB) );
+	.paletteindex(palette1),
+	.dataEnable(dataEnable1),
+	.inDisplayWindow(inDisplayWindow1) );
 
 wire vsync_we;
 wire [31:0] vsynccounter;
 logic [31:0] vsyncID = 32'd0;
 
-wire dataEnable = videopage == 1'b0 ? dataEnableA : dataEnableB;
-wire inDisplayWindow = videopage == 1'b0 ? inDisplayWindowA : inDisplayWindowB;
+wire dataEnable = videopage == 1'b0 ? dataEnable1 : dataEnable0;
+wire inDisplayWindow = videopage == 1'b0 ? inDisplayWindow1 : inDisplayWindow0;
 assign DVI_DE = dataEnable;
-assign palettereadaddress = (videopage == 1'b0) ? PALETTEINDEX_ONE : PALETTEINDEX_TWO;
-// TODO: Depending on video more, use palette out or the byte (PALETTEINDEX_ONE/PALETTEINDEX_TWO) as RGB color
-// May also want to introduce a secondary palette?
-wire [3:0] VIDEO_B = paletteout[7:4];
-wire [3:0] VIDEO_R = paletteout[15:12];
-wire [3:0] VIDEO_G = paletteout[23:20];
+assign palettereadaddress = (videopage == 1'b0) ? palette1 : palette0;
 
-// TODO: Border color
+// TODO: Depending on video mode, use palette out or the byte itself (palette0/palette1) as RGB color
+wire [3:0] VIDEO_B = /*vmode==1'b0 ? */paletteout[7:4];// : palette0[?:?];
+wire [3:0] VIDEO_R = /*vmode==1'b0 ? */paletteout[15:12];// : palette0[?:?];
+wire [3:0] VIDEO_G = /*vmode==1'b0 ? */paletteout[23:20];// : palette0[?:?];
+
+// TODO: Add a border color register
 assign DVI_R = inDisplayWindow ? (dataEnable ? VIDEO_R : 4'b0010) : 4'h0;
 assign DVI_G = inDisplayWindow ? (dataEnable ? VIDEO_G : 4'b0010) : 4'h0;
 assign DVI_B = inDisplayWindow ? (dataEnable ? VIDEO_B : 4'b0010) : 4'h0;
