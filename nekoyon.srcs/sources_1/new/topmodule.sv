@@ -32,13 +32,21 @@ module topmodule(
 	output wire spi_cs_n,
 	output wire spi_mosi,
 	input wire spi_miso,
-	output wire spi_sck );
+	output wire spi_sck,
+	// DVI
+	output wire [3:0] DVI_R,
+	output wire [3:0] DVI_G,
+	output wire [3:0] DVI_B,
+	output wire DVI_HS,
+	output wire DVI_VS,
+	output wire DVI_DE,
+	output wire DVI_CLK );
 
 // ----------------------------------------------------------------------------
 // Clocks and reset
 // ----------------------------------------------------------------------------
 
-wire wallclock, cpuclock, gpuclock, spibaseclock, reset;
+wire wallclock, cpuclock, gpuclock, spibaseclock, videoclock, reset;
 wire sys_clk_in, ddr3_ref;
 
 clockandresetgen CoreClocksAndReset(
@@ -47,6 +55,7 @@ clockandresetgen CoreClocksAndReset(
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
 	.gpuclock(gpuclock),
+	.videoclock(videoclock),
 	.sys_clk_in(sys_clk_in),
 	.ddr3_ref(ddr3_ref),
 	.devicereset(reset) );
@@ -69,6 +78,7 @@ sysbus SystemBus(
 	.gpuclock(gpuclock),
 	.wallclock(wallclock),
 	.spibaseclock(spibaseclock),
+	.videoclock(videoclock),
 	.reset(reset),
 	.businitialized(businitialized),
 	// CPU
@@ -100,7 +110,15 @@ sysbus SystemBus(
 	.spi_mosi(spi_mosi),
 	.spi_miso(spi_miso),
 	.spi_sck(spi_sck),
-    // Interrupts
+	// DVI
+	.DVI_R(DVI_R),
+	.DVI_G(DVI_G),
+	.DVI_B(DVI_B),
+	.DVI_HS(DVI_HS),
+	.DVI_VS(DVI_VS),
+	.DVI_DE(DVI_DE),
+	.DVI_CLK(DVI_CLK),
+    // Interrupt lines
 	.irqtrigger(irqtrigger),
 	.irqlines(irqlines),
     // Bus control

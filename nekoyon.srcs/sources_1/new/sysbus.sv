@@ -8,6 +8,7 @@ module sysbus(
 	input wire spibaseclock,
 	input wire cpuclock,
 	input wire gpuclock,
+	input wire videoclock,
 	input wire reset,
 	output logic businitialized = 1'b0,
 	// CPU
@@ -39,6 +40,14 @@ module sysbus(
 	output wire spi_mosi,
 	input wire spi_miso,
 	output wire spi_sck,
+	// DVI
+	output wire [3:0] DVI_R,
+	output wire [3:0] DVI_G,
+	output wire [3:0] DVI_B,
+	output wire DVI_HS,
+	output wire DVI_VS,
+	output wire DVI_DE,
+	output wire DVI_CLK,
 	// Interrupts
 	output wire irqtrigger,
 	output wire [3:0] irqlines,
@@ -261,6 +270,145 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 	.wea(sramwe) );
 
 // ----------------------------------------------------------------------------
+// Color palette
+// ----------------------------------------------------------------------------
+
+wire palettewe;
+wire [7:0] paletteaddress;
+wire [7:0] palettereadaddress;
+wire [23:0] palettedata;
+
+logic [23:0] paletteentries[0:255];
+
+// Set up with VGA color palette on startup
+initial begin
+	$readmemh("colorpalette.mem", paletteentries);
+end
+
+always @(posedge gpuclock) begin // Tied to GPU clock
+	if (palettewe)
+		paletteentries[paletteaddress] <= palettedata;
+end
+
+wire [23:0] paletteout;
+assign paletteout = paletteentries[palettereadaddress];
+
+// ----------------------------------------------------------------------------
+// Video units and DVI scan-out
+// ----------------------------------------------------------------------------
+
+wire [3:0] gpu_vramwe;
+wire [31:0] gpu_vramdin;
+wire [14:0] gpu_vramaddr;
+
+
+wire [11:0] video_x;
+wire [11:0] video_y;
+
+wire videopage;
+wire [7:0] PALETTEINDEX_ONE;
+wire [7:0] PALETTEINDEX_TWO;
+
+wire dataEnableA, dataEnableB;
+wire inDisplayWindowA, inDisplayWindowB;
+wire [12:0] gpu_lanemask;
+
+VideoControllerGen VMEMUnitA(
+	.gpuclock(gpuclock),
+	.vgaclock(videoclock),
+	.writesenabled(videopage),
+	.video_x(video_x),
+	.video_y(video_y),
+	// Wire input
+	.memaddress(gpu_vramaddr),
+	.mem_writeena(gpu_vramwe),
+	.writeword(gpu_vramdin),
+	.lanemask(gpu_lanemask),
+	// Video output
+	.paletteindex(PALETTEINDEX_ONE),
+	.dataEnable(dataEnableA),
+	.inDisplayWindow(inDisplayWindowA) );
+
+VideoControllerGen VMEMUnitB(
+	.gpuclock(gpuclock),
+	.vgaclock(videoclock),
+	.writesenabled(~videopage),
+	.video_x(video_x),
+	.video_y(video_y),
+	// Wire input
+	.memaddress(gpu_vramaddr),
+	.mem_writeena(gpu_vramwe),
+	.writeword(gpu_vramdin),
+	.lanemask(gpu_lanemask),
+	// Video output
+	.paletteindex(PALETTEINDEX_TWO),
+	.dataEnable(dataEnableB),
+	.inDisplayWindow(inDisplayWindowB) );
+
+wire vsync_we;
+wire [31:0] vsynccounter;
+logic [31:0] vsyncID = 32'd0;
+
+wire dataEnable = videopage == 1'b0 ? dataEnableA : dataEnableB;
+wire inDisplayWindow = videopage == 1'b0 ? inDisplayWindowA : inDisplayWindowB;
+assign DVI_DE = dataEnable;
+assign palettereadaddress = (videopage == 1'b0) ? PALETTEINDEX_ONE : PALETTEINDEX_TWO;
+// TODO: Depending on video more, use palette out or the byte (PALETTEINDEX_ONE/PALETTEINDEX_TWO) as RGB color
+// May also want to introduce a secondary palette?
+wire [3:0] VIDEO_B = paletteout[7:4];
+wire [3:0] VIDEO_R = paletteout[15:12];
+wire [3:0] VIDEO_G = paletteout[23:20];
+
+// TODO: Border color
+assign DVI_R = inDisplayWindow ? (dataEnable ? VIDEO_R : 4'b0010) : 4'h0;
+assign DVI_G = inDisplayWindow ? (dataEnable ? VIDEO_G : 4'b0010) : 4'h0;
+assign DVI_B = inDisplayWindow ? (dataEnable ? VIDEO_B : 4'b0010) : 4'h0;
+assign DVI_CLK = videoclock;
+
+videosignalgen VideoScanOutUnit(
+	.rst_i(reset),
+	.clk_i(videoclock),					// Video clock input for 640x480 image
+	.hsync_o(DVI_HS),				// DVI horizontal sync
+	.vsync_o(DVI_VS),				// DVI vertical sync
+	.counter_x(video_x),			// Video X position (in actual pixel units)
+	.counter_y(video_y),			// Video Y position
+	.vsynctrigger_o(vsync_we),		// High when we're OK to queue a VSYNC in FIFO
+	.vsynccounter(vsynccounter) );	// Each vsync has a unique marker so that we can wait for them by name
+
+// ----------------------------------------------------------------------------
+// Domain crossing vsync
+// ----------------------------------------------------------------------------
+
+wire [31:0] vsync_fastdomain;
+wire vsyncfifoempty;
+wire vsyncfifovalid;
+
+logic vsync_re;
+DomainCrossSignalFifo GPUVGAVSyncQueue(
+	.full(), // Not really going to get full (read clock faster than write clock)
+	.din(vsynccounter),
+	.wr_en(vsync_we),
+	.empty(vsyncfifoempty),
+	.dout(vsync_fastdomain),
+	.rd_en(vsync_re),
+	.wr_clk(clk25),
+	.rd_clk(gpuclock),
+	.rst(~resetn),
+	.valid(vsyncfifovalid) );
+
+// Drain the vsync fifo and set a new vsync signal for the GPU every time we find one
+// This is done in GPU clocks so we don't need to further sync the read data to GPU
+always @(posedge gpuclock) begin
+	vsync_re <= 1'b0;
+	if (~vsyncfifoempty) begin
+		vsync_re <= 1'b1;
+	end
+	if (vsyncfifovalid) begin
+		vsyncID <= vsync_fastdomain;
+	end
+end
+
+// ----------------------------------------------------------------------------
 // GPU
 // ----------------------------------------------------------------------------
 
@@ -273,6 +421,15 @@ wire [31:0] gpu_gramdout;
 gpu GPUDevice(
 	.clock(gpuclock),
 	.reset(reset),
+	// vsync and video page control
+	.vsyncID(vsyncID),
+	.videopage(videopage),
+	// V-RAM access (write only)
+	.vramwe(gpu_vramwe),
+	.vramdin(gpu_vramdin),
+	.vramaddr(gpu_vramaddr),
+	.lanemask(gpu_lanemask),
+	// G-RAM access (read/write)
 	.gramre(gpu_gramre),
 	.gramwe(gpu_gramwe),
 	.gramdin(gpu_gramdin),

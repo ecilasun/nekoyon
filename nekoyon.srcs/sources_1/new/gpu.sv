@@ -3,6 +3,13 @@
 module gpu (
 	input wire clock,
 	input wire reset,
+	input wire [31:0] vsyncID,
+	output logic videopage = 1'b0, // Current VRAM write page
+	// V-RAM
+	output logic [3:0] vramwe = 4'h0,
+	output logic [31:0] vramdin = 32'd0,
+	output logic [14:0] vramaddr = 15'd0,
+	output logic [12:0] lanemask = 13'd0,
 	// G-RAM
 	output logic gramre = 1'b0,
 	output logic [3:0] gramwe = 4'h0,

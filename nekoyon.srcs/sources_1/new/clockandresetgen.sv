@@ -6,6 +6,7 @@ module clockandresetgen(
 	output wire spibaseclock,
 	output wire cpuclock,
 	output wire gpuclock,
+	output wire videoclock,
 	output wire sys_clk_in,
 	output wire ddr3_ref,
 	output logic devicereset = 1'b1 );
@@ -18,6 +19,7 @@ cpuclockgen CentralClock(
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
 	.gpuclock(gpuclock),
+	.videoclock(videoclock),
 	.locked(clkAlocked) );
 
 DDR3Clocks DDR3MemoryClock(
