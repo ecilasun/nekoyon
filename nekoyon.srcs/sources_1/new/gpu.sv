@@ -8,7 +8,7 @@ module gpu (
 	// V-RAM
 	output logic [3:0] vramwe = 4'h0,
 	output logic [31:0] vramdin = 32'd0,
-	output logic [14:0] vramaddr = 15'd0,
+	output logic [16:0] vramaddr = 17'd0,
 	output logic [12:0] lanemask = 13'd0,
 	// G-RAM
 	output logic gramre = 1'b0,
@@ -67,6 +67,28 @@ gpuregisterfile GPURegFile(
 // ALU
 // -----------------------------------------------------------------------
 
+// TODO: Use these pipelined versions from CPU side for mul and div
+/*DIV signeddivider (
+	.clk(clock),
+	.reset(reset),
+	.start(divstart),		// start signal
+	.busy(divbusy),			// calculation in progress
+	.dividend(dividend),		// dividend
+	.divisor(divisor),		// divisor
+	.quotient(quotient),	// result: quotient
+	.remainder(remainder)	// result: remainder
+);
+
+multiplier themul(
+    .clk(clock),
+    .reset(reset),
+    .start(mulstart),
+    .busy(mulbusy),           // calculation in progress
+    .func3(`F3_MUL),
+    .multiplicand(multiplicand),
+    .multiplier(multiplier),
+    .product(product) );*/
+
 always_comb begin
 	case (aluop)
 		3'b000: begin // cmp
@@ -78,12 +100,13 @@ always_comb begin
 		end
 		3'b001: begin // sub
 			aluout = rval1-rval2;
+			//aluout = rval1 + (~rval2 + 32'd1);
 		end
-		3'b010: begin // div
-			aluout = rval1/rval2;
+		3'b010: begin // div - TODO: use pipelined version from CPU
+			; // aluout = rval1/rval2;
 		end
-		3'b011: begin // mul
-			aluout = rval1*rval2;
+		3'b011: begin // mul - TODO: use pipelined version from CPU
+			; // aluout = rval1*rval2;
 		end
 		3'b100: begin // add
 			{carryout, aluout} = rval1 + rval2;
@@ -154,7 +177,7 @@ always @(posedge clock) begin
 				rs2 <= gramdout[11:8];
 				rd <= gramdout[15:12];
 				imm16 <= gramdout[31:16];
-				aluop <= gramdout[16:16]; // imm16[2:0]
+				aluop <= gramdout[18:16]; // imm16[2:0]
 
 				gpumode[GPU_EXEC] <= 1'b1;
 			end
@@ -260,7 +283,7 @@ always @(posedge clock) begin
 								// noop
 							end
 						end else begin // V-RAM
-							vramaddr <= rval2[15:0];
+							vramaddr <= rval2[16:0];
 							if (imm16[1:0] == 2'b00) begin // store.w
 								vramdin <= rval1;
 								vramwe <= 4'hF;
@@ -330,10 +353,10 @@ always @(posedge clock) begin
 						// imm16[2:0] contains the sub-op encoding
 						// 0x___SRRR6
 						// cmp rs1, rs2, rd - compare rs1 to rs2 and set compare code
-						// add rs1, rs2, rd
 						// sub rs1, rs2, rd
 						// div rs1, rs2, rd
 						// mul rs1, rs2, rd
+						// add rs1, rs2, rd
 						// and rs1, rs2, rd
 						// or rs1, rs2, rd
 						// xor rs1, rs2, rd

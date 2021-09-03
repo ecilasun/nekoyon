@@ -299,7 +299,7 @@ assign paletteout = paletteentries[palettereadaddress];
 
 wire [3:0] gpu_vramwe;
 wire [31:0] gpu_vramdin;
-wire [14:0] gpu_vramaddr;
+wire [16:0] gpu_vramaddr;
 
 
 wire [11:0] video_x;
@@ -323,7 +323,7 @@ VideoControllerGen VMEMPage0(
 	.video_x(video_x),
 	.video_y(video_y),
 	// Wire input
-	.memaddress(gpu_vramaddr),
+	.memaddress(gpu_vramaddr[16:2]),
 	.mem_writeena(gpu_vramwe),
 	.writeword(gpu_vramdin),
 	.lanemask(gpu_lanemask),
@@ -339,7 +339,7 @@ VideoControllerGen VMEMPage1(
 	.video_x(video_x),
 	.video_y(video_y),
 	// Wire input
-	.memaddress(gpu_vramaddr),
+	.memaddress(gpu_vramaddr[16:2]),
 	.mem_writeena(gpu_vramwe),
 	.writeword(gpu_vramdin),
 	.lanemask(gpu_lanemask),

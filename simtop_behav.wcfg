@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,641.333000 ns"></ZoomStartTime>
-      <ZoomEndTime time="5,883.333001 ns"></ZoomEndTime>
-      <Cursor1Time time="2,428.333000 ns"></Cursor1Time>
+      <ZoomStartTime time="2,318.733000 ns"></ZoomStartTime>
+      <ZoomEndTime time="2,744.133001 ns"></ZoomEndTime>
+      <Cursor1Time time="2,488.333000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="208"></NameColumnWidth>
+      <NameColumnWidth column_width="202"></NameColumnWidth>
       <ValueColumnWidth column_width="97"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="148" />
+   <WVObjectSize size="108" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -374,6 +374,14 @@
       <obj_property name="ElementShortName">rd[3:0]</obj_property>
       <obj_property name="ObjectShortName">rd[3:0]</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/aluop">
+      <obj_property name="ElementShortName">aluop[2:0]</obj_property>
+      <obj_property name="ObjectShortName">aluop[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/aluout">
+      <obj_property name="ElementShortName">aluout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">aluout[31:0]</obj_property>
+   </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/rwe">
       <obj_property name="ElementShortName">rwe</obj_property>
       <obj_property name="ObjectShortName">rwe</obj_property>
@@ -397,6 +405,7 @@
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/GPURegFile/registers">
       <obj_property name="ElementShortName">registers[0:15][31:0]</obj_property>
       <obj_property name="ObjectShortName">registers[0:15][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="divider421" type="divider">
       <obj_property name="label">I/DCache</obj_property>
@@ -442,176 +451,8 @@
       <obj_property name="label">videoA</obj_property>
       <obj_property name="DisplayName">label</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/gpuclock">
-      <obj_property name="ElementShortName">gpuclock</obj_property>
-      <obj_property name="ObjectShortName">gpuclock</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/vgaclock">
-      <obj_property name="ElementShortName">vgaclock</obj_property>
-      <obj_property name="ObjectShortName">vgaclock</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/writesenabled">
-      <obj_property name="ElementShortName">writesenabled</obj_property>
-      <obj_property name="ObjectShortName">writesenabled</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/video_x">
-      <obj_property name="ElementShortName">video_x[11:0]</obj_property>
-      <obj_property name="ObjectShortName">video_x[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/video_y">
-      <obj_property name="ElementShortName">video_y[11:0]</obj_property>
-      <obj_property name="ObjectShortName">video_y[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/memaddress">
-      <obj_property name="ElementShortName">memaddress[14:0]</obj_property>
-      <obj_property name="ObjectShortName">memaddress[14:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/mem_writeena">
-      <obj_property name="ElementShortName">mem_writeena[3:0]</obj_property>
-      <obj_property name="ObjectShortName">mem_writeena[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/writeword">
-      <obj_property name="ElementShortName">writeword[31:0]</obj_property>
-      <obj_property name="ObjectShortName">writeword[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/lanemask">
-      <obj_property name="ElementShortName">lanemask[12:0]</obj_property>
-      <obj_property name="ObjectShortName">lanemask[12:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/paletteindex">
-      <obj_property name="ElementShortName">paletteindex[7:0]</obj_property>
-      <obj_property name="ObjectShortName">paletteindex[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/dataEnable">
-      <obj_property name="ElementShortName">dataEnable</obj_property>
-      <obj_property name="ObjectShortName">dataEnable</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/inDisplayWindow">
-      <obj_property name="ElementShortName">inDisplayWindow</obj_property>
-      <obj_property name="ObjectShortName">inDisplayWindow</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/scanlinecache">
-      <obj_property name="ElementShortName">scanlinecache[0:127][31:0]</obj_property>
-      <obj_property name="ObjectShortName">scanlinecache[0:127][31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/pixelY">
-      <obj_property name="ElementShortName">pixelY[11:0]</obj_property>
-      <obj_property name="ObjectShortName">pixelY[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/scanoutaddress">
-      <obj_property name="ElementShortName">scanoutaddress[31:0]</obj_property>
-      <obj_property name="ObjectShortName">scanoutaddress[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/cachewriteaddress">
-      <obj_property name="ElementShortName">cachewriteaddress[6:0]</obj_property>
-      <obj_property name="ObjectShortName">cachewriteaddress[6:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/cachereadaddress">
-      <obj_property name="ElementShortName">cachereadaddress[6:0]</obj_property>
-      <obj_property name="ObjectShortName">cachereadaddress[6:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/isCachingRow">
-      <obj_property name="ElementShortName">isCachingRow</obj_property>
-      <obj_property name="ObjectShortName">isCachingRow</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/videobyteselect">
-      <obj_property name="ElementShortName">videobyteselect[1:0]</obj_property>
-      <obj_property name="ObjectShortName">videobyteselect[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/vram_data">
-      <obj_property name="ElementShortName">vram_data[0:12][31:0]</obj_property>
-      <obj_property name="ObjectShortName">vram_data[0:12][31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitA/videooutbyte">
-      <obj_property name="ElementShortName">videooutbyte[7:0]</obj_property>
-      <obj_property name="ObjectShortName">videooutbyte[7:0]</obj_property>
-   </wvobject>
    <wvobject fp_name="divider674" type="divider">
       <obj_property name="label">videoB</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/gpuclock">
-      <obj_property name="ElementShortName">gpuclock</obj_property>
-      <obj_property name="ObjectShortName">gpuclock</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/vgaclock">
-      <obj_property name="ElementShortName">vgaclock</obj_property>
-      <obj_property name="ObjectShortName">vgaclock</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/writesenabled">
-      <obj_property name="ElementShortName">writesenabled</obj_property>
-      <obj_property name="ObjectShortName">writesenabled</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/video_x">
-      <obj_property name="ElementShortName">video_x[11:0]</obj_property>
-      <obj_property name="ObjectShortName">video_x[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/video_y">
-      <obj_property name="ElementShortName">video_y[11:0]</obj_property>
-      <obj_property name="ObjectShortName">video_y[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/memaddress">
-      <obj_property name="ElementShortName">memaddress[14:0]</obj_property>
-      <obj_property name="ObjectShortName">memaddress[14:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/mem_writeena">
-      <obj_property name="ElementShortName">mem_writeena[3:0]</obj_property>
-      <obj_property name="ObjectShortName">mem_writeena[3:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/writeword">
-      <obj_property name="ElementShortName">writeword[31:0]</obj_property>
-      <obj_property name="ObjectShortName">writeword[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/lanemask">
-      <obj_property name="ElementShortName">lanemask[12:0]</obj_property>
-      <obj_property name="ObjectShortName">lanemask[12:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/paletteindex">
-      <obj_property name="ElementShortName">paletteindex[7:0]</obj_property>
-      <obj_property name="ObjectShortName">paletteindex[7:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/dataEnable">
-      <obj_property name="ElementShortName">dataEnable</obj_property>
-      <obj_property name="ObjectShortName">dataEnable</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/inDisplayWindow">
-      <obj_property name="ElementShortName">inDisplayWindow</obj_property>
-      <obj_property name="ObjectShortName">inDisplayWindow</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/scanlinecache">
-      <obj_property name="ElementShortName">scanlinecache[0:127][31:0]</obj_property>
-      <obj_property name="ObjectShortName">scanlinecache[0:127][31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/pixelY">
-      <obj_property name="ElementShortName">pixelY[11:0]</obj_property>
-      <obj_property name="ObjectShortName">pixelY[11:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/scanoutaddress">
-      <obj_property name="ElementShortName">scanoutaddress[31:0]</obj_property>
-      <obj_property name="ObjectShortName">scanoutaddress[31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/cachewriteaddress">
-      <obj_property name="ElementShortName">cachewriteaddress[6:0]</obj_property>
-      <obj_property name="ObjectShortName">cachewriteaddress[6:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/cachereadaddress">
-      <obj_property name="ElementShortName">cachereadaddress[6:0]</obj_property>
-      <obj_property name="ObjectShortName">cachereadaddress[6:0]</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/isCachingRow">
-      <obj_property name="ElementShortName">isCachingRow</obj_property>
-      <obj_property name="ObjectShortName">isCachingRow</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/videobyteselect">
-      <obj_property name="ElementShortName">videobyteselect[1:0]</obj_property>
-      <obj_property name="ObjectShortName">videobyteselect[1:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/vram_data">
-      <obj_property name="ElementShortName">vram_data[0:12][31:0]</obj_property>
-      <obj_property name="ObjectShortName">vram_data[0:12][31:0]</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/VMEMUnitB/videooutbyte">
-      <obj_property name="ElementShortName">videooutbyte[7:0]</obj_property>
-      <obj_property name="ObjectShortName">videooutbyte[7:0]</obj_property>
    </wvobject>
 </wave_config>
