@@ -17,14 +17,15 @@ This version implements the following:
 - SPI module for SDCard support
 - Integer math unit (M extension)
 - Floating point unit (F extension)
+- Graphics output
+  - Dual V-RAM (scan-out buffers)
+  - vsync wait capability via frame IDs
+  - Graphics memory (G-RAM, large enough for at least one back buffer)
+  - G-RAM based command buffers
 
 ## TODO
 - Graphics output
-  - Dual V-RAM (scan-out buffers)
-  - Vsync
-  - Command FIFO
-  - Graphics memory (G-RAM, large enough for at least one back buffer)
-  - DMA unit from G-RAM
+  - DMA instructions to move data from G-RAM to V-RAM
 - Audio output
   - Self-timing stereo output FIFO
 - Hardware I/O
