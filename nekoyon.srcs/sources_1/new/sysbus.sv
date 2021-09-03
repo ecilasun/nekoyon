@@ -391,9 +391,9 @@ DomainCrossSignalFifo GPUVGAVSyncQueue(
 	.empty(vsyncfifoempty),
 	.dout(vsync_fastdomain),
 	.rd_en(vsync_re),
-	.wr_clk(clk25),
+	.wr_clk(videoclock),
 	.rd_clk(gpuclock),
-	.rst(~resetn),
+	.rst(reset),
 	.valid(vsyncfifovalid) );
 
 // Drain the vsync fifo and set a new vsync signal for the GPU every time we find one
