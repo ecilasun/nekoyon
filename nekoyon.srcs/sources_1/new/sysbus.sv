@@ -316,7 +316,7 @@ wire [12:0] gpu_lanemask;
 VideoControllerGen VMEMUnitA(
 	.gpuclock(gpuclock),
 	.vgaclock(videoclock),
-	.writesenabled(videopage),
+	.writesenabled(~videopage), // high when page==0
 	.video_x(video_x),
 	.video_y(video_y),
 	// Wire input
@@ -332,7 +332,7 @@ VideoControllerGen VMEMUnitA(
 VideoControllerGen VMEMUnitB(
 	.gpuclock(gpuclock),
 	.vgaclock(videoclock),
-	.writesenabled(~videopage),
+	.writesenabled(videopage), // high when page!=0
 	.video_x(video_x),
 	.video_y(video_y),
 	// Wire input
@@ -434,7 +434,11 @@ gpu GPUDevice(
 	.gramwe(gpu_gramwe),
 	.gramdin(gpu_gramdin),
 	.gramaddr(gpu_gramaddr),
-	.gramdout(gpu_gramdout) );
+	.gramdout(gpu_gramdout),
+	// Color palette
+	.palettewe(palettewe),
+	.paletteaddress(paletteaddress),
+	.palettedata(palettedata) );
 
 // -----------------------------------------------------------------------
 // G-RAM (128Kbytes)

@@ -15,7 +15,10 @@ module gpu (
 	output logic [3:0] gramwe = 4'h0,
 	output logic [31:0] gramdin = 32'd0,
 	output logic [15:0] gramaddr = 16'd0,
-	input wire [31:0] gramdout );
+	input wire [31:0] gramdout,
+	output logic palettewe = 1'b0,
+	output logic [7:0] paletteaddress = 8'h00,
+	output logic [23:0] palettedata = 24'h000 );
 
 // -----------------------------------------------------------------------
 // Internal wires and registers
@@ -24,6 +27,10 @@ module gpu (
 logic [15:0] PC = 16'd0;
 logic [15:0] nextPC = 16'd0;
 
+logic [31:0] vsyncID1;
+logic [31:0] vsyncID2;
+
+logic [31:0] vsyncrequestpoint = 32'd0;
 logic [15:0] imm16;
 logic [3:0] opcode;
 logic [3:0] rs1;
@@ -36,6 +43,11 @@ wire [31:0] rval2;
 logic [2:0] aluop;
 logic carryout;
 logic [31:0] aluout;
+
+always @(posedge clock) begin
+	vsyncID1 <= vsyncID;
+	vsyncID2 <= vsyncID1;
+end
 
 // -----------------------------------------------------------------------
 // Register file
@@ -92,14 +104,15 @@ end
 // Core
 // -----------------------------------------------------------------------
 
-localparam GPU_RESET	= 0;
-localparam GPU_RETIRE	= 1;
-localparam GPU_FETCH	= 2;
-localparam GPU_DECODE	= 3;
-localparam GPU_EXEC		= 4;
-localparam GPU_LOAD		= 5;
+localparam GPU_RESET		= 0;
+localparam GPU_RETIRE		= 1;
+localparam GPU_FETCH		= 2;
+localparam GPU_DECODE		= 3;
+localparam GPU_EXEC			= 4;
+localparam GPU_LOAD			= 5;
+localparam GPU_WAITVSYNC	= 6;
 
-logic [5:0] gpumode;
+logic [6:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -122,6 +135,8 @@ always @(posedge clock) begin
 			gpumode[GPU_FETCH]: begin
 				// Stop read
 				gramre <= 1'b0;
+				// Set up vsync request point
+				vsyncrequestpoint <= vsyncID2;
 				gpumode[GPU_DECODE] <= 1'b1;
 			end
 
@@ -150,6 +165,8 @@ always @(posedge clock) begin
 
 				if (opcode == 3'h3) // load.w/h/b
 					gpumode[GPU_LOAD] <= 1'b1;
+				else if ((opcode == 3'h7) && (imm16[1:0]==2'b01)) // vsync
+					gpumode[GPU_WAITVSYNC] <= 1'b1;
 				else
 					gpumode[GPU_RETIRE] <= 1'b1;
 
@@ -220,7 +237,7 @@ always @(posedge clock) begin
 						// store.h rs1, rs2- store halfword contained in rs1[15:0] at G-RAM address in rs2
 						// store.b rs1, rs2 - store byte contained in rs1[7:0] at G-RAM address in rs2
 
-						//if (rval2[31] == 1'b0) begin // G-RAM
+						if (rval2[31] == 1'b0) begin // G-RAM
 							gramaddr <= rval2[15:0];
 							if (imm16[1:0] == 2'b00) begin // store.w
 								gramdin <= rval1;
@@ -242,9 +259,29 @@ always @(posedge clock) begin
 							end else begin // imm16[1:0] == 2'b11
 								// noop
 							end
-						//end else begin
-						//	TODO: store in VRAM instead
-						//end
+						end else begin // V-RAM
+							vramaddr <= rval2[15:0];
+							if (imm16[1:0] == 2'b00) begin // store.w
+								vramdin <= rval1;
+								vramwe <= 4'hF;
+							end else if (imm16[1:0] == 2'b01) begin // store.h
+								vramdin <= {rval1[15:0], rval1[15:0]};
+								case (rval2[1])
+									1'b1: begin vramwe <= 4'hC; end
+									1'b0: begin vramwe <= 4'h3; end
+								endcase
+							end else if (imm16[1:0] == 2'b10) begin // store.b
+								vramdin <= {rval1[7:0], rval1[7:0], rval1[7:0], rval1[7:0]};
+								case (rval2[1:0])
+									2'b11: begin vramwe <= 4'h8; end
+									2'b10: begin vramwe <= 4'h4; end
+									2'b01: begin vramwe <= 4'h2; end
+									2'b00: begin vramwe <= 4'h1; end
+								endcase
+							end else begin // imm16[1:0] == 2'b11
+								// noop
+							end
+						end
 					end
 
 					3'h3: begin
@@ -257,8 +294,8 @@ always @(posedge clock) begin
 						//if (rval2[31] == 1'b0) begin // G-RAM
 							gramaddr <= rval2[15:0];
 							gramre <= 1'b1;
-						//end else begin
-						//	TODO: read from VRAM instead
+						//end else begin // V-RAM
+							// NOTE: Memory reads from VRAM are not possible at this point
 						//end
 					end
 
@@ -282,10 +319,13 @@ always @(posedge clock) begin
 
 					3'h5: begin
 						// 0x00000005
-						// wpal rs1, rd - write 24bit color value from rs1[23:0] onto palette index at rd
+						// wpal rs1, rs2 - write 24bit color value from rs1[23:0] onto palette index at rs2
 						// TODO: error diffusion dither helpers for RGB values?
+						// ---- ---- ---- ---- IIII IIII DDDD MCCC
+						paletteaddress <= rval2;
+						palettedata <= rval1[23:0];
+						palettewe <= 1'b1;
 					end
-
 					3'h6: begin
 						// imm16[2:0] contains the sub-op encoding
 						// 0x___SRRR6
@@ -303,11 +343,31 @@ always @(posedge clock) begin
 					end
 
 					3'h7: begin
-						// 0x_______7
-						// noop
-						rdin <= 32'hCECECECE; // Debug
+						// imm16[1:0] contains the sub-op encoding
+						// 0x___S___7
+						// noop / vsync / vpage rs1
+
+						case (imm16[1:0])
+							2'b00: begin
+								; // noop
+							end
+							2'b01: begin // vsync
+								; //gpumode[GPU_WAITVSYNC] <= 1'b1; // NOTE: This is set above
+							end
+							2'b10: begin // vpage
+								videopage <= rval1;
+							end
+						endcase
 					end
 				endcase
+			end
+
+			gpumode[GPU_WAITVSYNC]: begin
+				if (vsyncID > vsyncrequestpoint) begin
+					gpumode[GPU_RETIRE] <= 1'b1;
+				end else begin
+					gpumode[GPU_WAITVSYNC] <= 1'b1;
+				end
 			end
 
 			gpumode[GPU_LOAD]: begin
@@ -334,10 +394,11 @@ always @(posedge clock) begin
 			end
 
 			gpumode[GPU_RETIRE]: begin
-				// Stop register writes
+				// Stop register/palette/memory writes
 				rwe <= 1'b0;
-				// Stop memory writes
+				palettewe <= 1'b0;
 				gramwe <= 4'h0;
+				vramwe <= 4'h0;
 
 				// Set up address for instruction fetch
 				PC <= nextPC;
