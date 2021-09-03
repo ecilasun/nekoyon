@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.045500000 us"></ZoomStartTime>
-      <ZoomEndTime time="108.845500001 us"></ZoomEndTime>
-      <Cursor1Time time="38.341251000 us"></Cursor1Time>
+      <ZoomStartTime time="2,089.583000 ns"></ZoomStartTime>
+      <ZoomEndTime time="3,144.083001 ns"></ZoomEndTime>
+      <Cursor1Time time="2,188.333000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="153"></NameColumnWidth>
-      <ValueColumnWidth column_width="97"></ValueColumnWidth>
+      <NameColumnWidth column_width="219"></NameColumnWidth>
+      <ValueColumnWidth column_width="98"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="79" />
+   <WVObjectSize size="99" />
    <wvobject type="logic" fp_name="/simtop/fpgaexternalclock">
       <obj_property name="ElementShortName">fpgaexternalclock</obj_property>
       <obj_property name="ObjectShortName">fpgaexternalclock</obj_property>
@@ -109,8 +109,8 @@
       <obj_property name="ObjectShortName">sramre</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/SystemBus/deviceSelect">
-      <obj_property name="ElementShortName">deviceSelect[5:0]</obj_property>
-      <obj_property name="ObjectShortName">deviceSelect[5:0]</obj_property>
+      <obj_property name="ElementShortName">deviceSelect[6:0]</obj_property>
+      <obj_property name="ObjectShortName">deviceSelect[6:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/uartreadbusy">
       <obj_property name="ElementShortName">uartreadbusy</obj_property>
@@ -229,8 +229,8 @@
       <obj_property name="ObjectShortName">branchout</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/cpumode">
-      <obj_property name="ElementShortName">cpumode[9:0]</obj_property>
-      <obj_property name="ObjectShortName">cpumode[9:0]</obj_property>
+      <obj_property name="ElementShortName">cpumode[12:0]</obj_property>
+      <obj_property name="ObjectShortName">cpumode[12:0]</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/PC">
       <obj_property name="ElementShortName">PC[31:0]</obj_property>
@@ -249,15 +249,6 @@
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/internalretirecounter">
       <obj_property name="ElementShortName">internalretirecounter[63:0]</obj_property>
       <obj_property name="ObjectShortName">internalretirecounter[63:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="divider426" type="divider">
-      <obj_property name="label">CSR</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/CSRReg">
-      <obj_property name="ElementShortName">CSRReg[0:23][31:0]</obj_property>
-      <obj_property name="ObjectShortName">CSRReg[0:23][31:0]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="divider183" type="divider">
       <obj_property name="label">intregs</obj_property>
@@ -298,6 +289,132 @@
    <wvobject type="array" fp_name="/simtop/topinst/CPUCore0/IntegerRegFile/registers">
       <obj_property name="ElementShortName">registers[0:31][31:0]</obj_property>
       <obj_property name="ObjectShortName">registers[0:31][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider104" type="divider">
+      <obj_property name="label">gpu</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/clock">
+      <obj_property name="ElementShortName">clock</obj_property>
+      <obj_property name="ObjectShortName">clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gramre">
+      <obj_property name="ElementShortName">gramre</obj_property>
+      <obj_property name="ObjectShortName">gramre</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/gramdout">
+      <obj_property name="ElementShortName">gramdout[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gramdout[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/gramwe">
+      <obj_property name="ElementShortName">gramwe[3:0]</obj_property>
+      <obj_property name="ObjectShortName">gramwe[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/gramdin">
+      <obj_property name="ElementShortName">gramdin[31:0]</obj_property>
+      <obj_property name="ObjectShortName">gramdin[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/gramaddr">
+      <obj_property name="ElementShortName">gramaddr[15:0]</obj_property>
+      <obj_property name="ObjectShortName">gramaddr[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/PC">
+      <obj_property name="ElementShortName">PC[15:0]</obj_property>
+      <obj_property name="ObjectShortName">PC[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/nextPC">
+      <obj_property name="ElementShortName">nextPC[15:0]</obj_property>
+      <obj_property name="ObjectShortName">nextPC[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/instruction">
+      <obj_property name="ElementShortName">instruction[31:0]</obj_property>
+      <obj_property name="ObjectShortName">instruction[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/imm16">
+      <obj_property name="ElementShortName">imm16[15:0]</obj_property>
+      <obj_property name="ObjectShortName">imm16[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/opcode">
+      <obj_property name="ElementShortName">opcode[3:0]</obj_property>
+      <obj_property name="ObjectShortName">opcode[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rs1">
+      <obj_property name="ElementShortName">rs1[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rs1[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rs2">
+      <obj_property name="ElementShortName">rs2[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rs2[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rd">
+      <obj_property name="ElementShortName">rd[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/rwe">
+      <obj_property name="ElementShortName">rwe</obj_property>
+      <obj_property name="ObjectShortName">rwe</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rdin">
+      <obj_property name="ElementShortName">rdin[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rdin[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rval1">
+      <obj_property name="ElementShortName">rval1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval1[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/rval2">
+      <obj_property name="ElementShortName">rval2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rval2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode">
+      <obj_property name="ElementShortName">gpumode[5:0]</obj_property>
+      <obj_property name="ObjectShortName">gpumode[5:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[5]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[5]</obj_property>
+         <obj_property name="ObjectShortName">[5]</obj_property>
+         <obj_property name="label">LOAD</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[4]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[4]</obj_property>
+         <obj_property name="ObjectShortName">[4]</obj_property>
+         <obj_property name="label">EXEC</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[3]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[3]</obj_property>
+         <obj_property name="ObjectShortName">[3]</obj_property>
+         <obj_property name="label">DECODE</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[2]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[2]</obj_property>
+         <obj_property name="ObjectShortName">[2]</obj_property>
+         <obj_property name="label">FETCH</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[1]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[1]</obj_property>
+         <obj_property name="ObjectShortName">[1]</obj_property>
+         <obj_property name="label">RETIRE</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/simtop/topinst/SystemBus/GPUDevice/gpumode[0]">
+         <obj_property name="DisplayName">label</obj_property>
+         <obj_property name="ElementShortName">[0]</obj_property>
+         <obj_property name="ObjectShortName">[0]</obj_property>
+         <obj_property name="label">RESET</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="array" fp_name="/simtop/topinst/SystemBus/GPUDevice/GPURegFile/registers">
+      <obj_property name="ElementShortName">registers[0:15][31:0]</obj_property>
+      <obj_property name="ObjectShortName">registers[0:15][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject fp_name="divider421" type="divider">
       <obj_property name="label">I/DCache</obj_property>

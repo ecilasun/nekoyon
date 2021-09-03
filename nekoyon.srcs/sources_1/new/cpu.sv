@@ -16,7 +16,8 @@ module cpu(
 	output logic [31:0] busaddress = 32'd0,
 	inout wire [31:0] busdata,
 	output logic [3:0] buswe = 4'h0,
-	output logic busre = 1'b0 );
+	output logic busre = 1'b0,
+	output logic dcacheicachesync = 1'b0);
 
 // -----------------------------------------------------------------------
 // Bidirectional bus logic
@@ -548,6 +549,7 @@ always @(posedge clock) begin
 				ebreak <= 1'b0;
 				ecall <= 1'b0;
 				illegalinstruction <= 1'b0;
+				dcacheicachesync <= 1'b0;
 				rdin <= 32'd0;
 
 				// Take load or op branch, otherwise process store in-place
@@ -814,7 +816,15 @@ always @(posedge clock) begin
 					end
 
 					instrOneHot[`O_H_FENCE]: begin
-						// TBD
+						case (func3)
+							3'b000: begin
+								// FENCE (across harts, pred/succ ordering of IORW ops)
+							end
+							3'b001: begin
+								// FENCE.I (D$->I$)
+								dcacheicachesync <= 1'b1;
+							end
+						endcase
 					end
 
 					instrOneHot[`O_H_JALR]: begin

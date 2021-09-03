@@ -55,7 +55,7 @@ clockandresetgen CoreClocksAndReset(
 // System Bus
 // ----------------------------------------------------------------------------
 
-wire businitialized, busbusy, ifetch;
+wire businitialized, busbusy, ifetch, dcacheicachesync;
 wire [31:0] busaddress;
 wire [31:0] busdata;
 wire [3:0] buswe;
@@ -73,6 +73,7 @@ sysbus SystemBus(
 	.businitialized(businitialized),
 	// CPU
 	.ifetch(ifetch),
+	.dcacheicachesync(dcacheicachesync),
 	// UART
 	.uart_rxd_out(uart_rxd_out),
 	.uart_txd_in(uart_txd_in),
@@ -125,6 +126,7 @@ cpu CPUCore0(
 	.busaddress(busaddress),
 	.busdata(busdata),
 	.buswe(buswe),
-	.busre(busre) );
+	.busre(busre),
+	.dcacheicachesync(dcacheicachesync) );
 
 endmodule

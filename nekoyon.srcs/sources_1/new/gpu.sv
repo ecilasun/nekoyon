@@ -7,16 +7,15 @@ module gpu (
 	output logic gramre = 1'b0,
 	output logic [3:0] gramwe = 4'h0,
 	output logic [31:0] gramdin = 32'd0,
-	output logic [13:0] gramaddr = 14'd0,
+	output logic [15:0] gramaddr = 16'd0,
 	input wire [31:0] gramdout );
 
 // -----------------------------------------------------------------------
 // Internal wires and registers
 // -----------------------------------------------------------------------
 
-logic [13:0] PC = 14'd0;
-logic [13:0] nextPC = 14'd0;
-logic [31:0] instruction = 32'd0;
+logic [15:0] PC = 16'd0;
+logic [15:0] nextPC = 16'd0;
 
 logic [15:0] imm16;
 logic [3:0] opcode;
@@ -27,6 +26,9 @@ logic rwe = 1'b0;
 logic [31:0] rdin = 32'd0;
 wire [31:0] rval1;
 wire [31:0] rval2;
+logic [2:0] aluop;
+logic carryout;
+logic [31:0] aluout;
 
 // -----------------------------------------------------------------------
 // Register file
@@ -43,22 +45,40 @@ gpuregisterfile GPURegFile(
 	.rval2(rval2) );
 
 // -----------------------------------------------------------------------
-// Decoder
+// ALU
 // -----------------------------------------------------------------------
 
 always_comb begin
-	// imm16            rd   rs2  rs1  op
-	// 0000000000000000 0000 0000 0000 0000
-
-	// if high bit of memory address is set: VRAM
-	// if high bit of memory address is clear: G-RAM
-	// default stack pointer is in G-RAM at 32'h0000FFF0, set by register g2
-
-	opcode = instruction[3:0];
-	rs1 = instruction[7:4];
-	rs2 = instruction[11:8];
-	rd = instruction[15:12];
-	imm16 = instruction[31:16];
+	case (aluop)
+		3'b000: begin // cmp
+			case (1'b1)
+				rval1==rval2: aluout = {29'd0, 3'h001};
+				rval1<rval2:  aluout = {29'd0, 3'b010};
+				rval1>rval2:  aluout = {29'd0, 3'b100};
+			endcase
+		end
+		3'b001: begin // sub
+			aluout = rval1-rval2;
+		end
+		3'b010: begin // div
+			aluout = rval1/rval2;
+		end
+		3'b011: begin // mul
+			aluout = rval1*rval2;
+		end
+		3'b100: begin // add
+			{carryout, aluout} = rval1 + rval2;
+		end
+		3'b101: begin // and
+			aluout = rval1 & rval2;
+		end
+		3'b110: begin // or
+			aluout = rval1 | rval2;
+		end
+		3'b111: begin // xor
+			aluout = rval1 ^ rval2;
+		end
+	endcase
 end
 
 // -----------------------------------------------------------------------
@@ -68,10 +88,11 @@ end
 localparam GPU_RESET	= 0;
 localparam GPU_RETIRE	= 1;
 localparam GPU_FETCH	= 2;
-localparam GPU_EXEC		= 3;
-localparam GPU_LOAD		= 4;
+localparam GPU_DECODE	= 3;
+localparam GPU_EXEC		= 4;
+localparam GPU_LOAD		= 5;
 
-logic [4:0] gpumode;
+logic [5:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -85,8 +106,8 @@ always @(posedge clock) begin
 
 		case (1'b1)
 			gpumode[GPU_RESET]: begin
-				PC <= 14'd0;
-				nextPC <= 14'd0;
+				PC <= 16'd0;
+				nextPC <= 16'd0;
 
 				gpumode[GPU_RETIRE] <= 1'b1;
 			end
@@ -94,33 +115,85 @@ always @(posedge clock) begin
 			gpumode[GPU_FETCH]: begin
 				// Stop read
 				gramre <= 1'b0;
-				// Feed decoder
-				instruction <= gramdout;
+				gpumode[GPU_DECODE] <= 1'b1;
+			end
+
+			gpumode[GPU_DECODE]: begin
+				// Instruction encoding:
+				// imm16            rd   rs2  rs1  op
+				// 0000000000000000 0000 0000 0000 0000
+			
+				// If high bit of memory address is set: VRAM
+				// If high bit of memory address is clear: G-RAM
+				// Default stack pointer is in G-RAM at 32'h0000FFF0, set by register r2
+
+				opcode <= gramdout[2:0]; // instruction[3] is reserved
+				rs1 <= gramdout[7:4];
+				rs2 <= gramdout[11:8];
+				rd <= gramdout[15:12];
+				imm16 <= gramdout[31:16];
+				aluop <= gramdout[16:16]; // imm16[2:0]
+
 				gpumode[GPU_EXEC] <= 1'b1;
 			end
 
 			gpumode[GPU_EXEC]: begin
-				// Go to next instruction if we're not reading 'halt'
-				if (opcode == 4'h0 && rs1[0] == 1'b0)
-					nextPC <= PC;
-				else // all other instructions including noop drop here
-					nextPC <= PC + 14'd4;
+				// Default behavior
+				nextPC <= PC + 16'd4;
 
-				if (opcode == 4'h3) // load.w/h/b
+				if (opcode == 3'h3) // load.w/h/b
 					gpumode[GPU_LOAD] <= 1'b1;
 				else
 					gpumode[GPU_RETIRE] <= 1'b1;
 
+				rwe <= 1'b0;
+
 				case (opcode)
-					4'h0: begin
-						// halt (rs1[0] == 1'b0) 0x______00
-						// noop (rs1[0] == 1'b1) 0x______10
-						// NOTE: When GPU reads 'halt' it can't move ot the next instruction until
-						// the CPU writes a 'noop' at that address, after which the GPU will resume
-						// Default contents of G-RAM contain all 'halt' instructions so that GPU is forced
-						// to re-read memory address zero at startup
+					3'h0: begin
+						// imm16[2:0] contains the sub-op encoding
+						// rs1 contains the compare result on lower 3 bits
+						// 0x____RS_7
+						// branch instructions use a link register to store current PC
+						// jmp rs2 - this is also the 'ret' instruction - HALT encoded with rs2==r0, rs1 is ignored (set to r0)
+						// bne rs2, rs1
+						// beq rs2, rs1
+						// ble rs2, rs1
+						// bl rs2, rs1
+						// bg rs2, rs1
+						// bge rs2, rs1
+						
+						// jmp zero encodes as 0x00000000, a.k.a. HALT
+						
+						// Store return address in register so that call site may save it to stack
+						rwe <= 1'b1;
+						rdin <= PC + 16'd4;
+
+						case (imm16[2:0])
+							3'b000: begin // jmp
+								nextPC <= rval2;
+							end
+							3'b001: begin // bne
+								nextPC <= ~rval1[0] ? rval2 : PC;
+							end
+							3'b010: begin // beq
+								nextPC <= rval1[0] ? rval2 : PC;
+							end
+							3'b011: begin // ble
+								nextPC <= (rval1[1]|rval1[0]) ? rval2 : PC;
+							end
+							3'b100: begin // bl
+								nextPC <= rval1[1] ? rval2 : PC;
+							end
+							3'b101: begin // bg
+								nextPC <= rval1[2] ? rval2 : PC;
+							end
+							3'b110: begin // bge
+								nextPC <= (rval1[2]|rval1[0]) ? rval2 : PC;
+							end
+						endcase
 					end
-					4'h1: begin
+
+					3'h1: begin
 						// 0xIIIIRSR1
 						// rs2[0] contains the sub-op encoding
 						// if rs1 is set to rd, this will essentially become 'replace 16 bits of register'
@@ -132,7 +205,8 @@ always @(posedge clock) begin
 							rdin <= {rval1[31:16], imm16};
 						rwe <= 1'b1;
 					end
-					4'h2: begin
+
+					3'h2: begin
 						// 0x___S_RR2
 						// imm16[1:0] contains the sub-op encoding
 						// store.w rs1, rs2- store word contained in rs1 at G-RAM address in rs2
@@ -140,7 +214,7 @@ always @(posedge clock) begin
 						// store.b rs1, rs2 - store byte contained in rs1[7:0] at G-RAM address in rs2
 
 						//if (rval2[31] == 1'b0) begin // G-RAM
-							gramaddr <= rval2[15:2]; // DWORD aligned
+							gramaddr <= rval2[15:0];
 							if (imm16[1:0] == 2'b00) begin // store.w
 								gramdin <= rval1;
 								gramwe <= 4'hF;
@@ -162,10 +236,11 @@ always @(posedge clock) begin
 								// noop
 							end
 						//end else begin
-						//	TODO: store in VRAM
+						//	TODO: store in VRAM instead
 						//end
 					end
-					4'h3: begin
+
+					3'h3: begin
 						// imm16[1:0] contains the sub-op encoding
 						// 0x___SRR_3
 						// load.w rs2, rd - load word contained at address rs2 in register rd
@@ -173,13 +248,14 @@ always @(posedge clock) begin
 						// load.b rs2, rd - load byte contained at address rs2 in register rd
 
 						//if (rval2[31] == 1'b0) begin // G-RAM
-							gramaddr <= rval2[15:2]; // DWORD aligned
+							gramaddr <= rval2[15:0];
 							gramre <= 1'b1;
 						//end else begin
-						//	TODO: read from VRAM
+						//	TODO: read from VRAM instead
 						//end
 					end
-					4'h4: begin
+
+					3'h4: begin
 						// imm16[1:0] contains the sub-op encoding
 						// 0x___SRRR4
 						// dma.w rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 words
@@ -188,53 +264,41 @@ always @(posedge clock) begin
 						// dma.mw rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 words, skipping zero
 						// dma.mh rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 halfwords, skipping zero
 						// dma.mb rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 bytes, skipping zero
+
+						// TODO: Might do it with a DMA list in memory at rs1, with DMA flags inregister rs2
+						// and memory containing list of [DMALEN,SOURCE(G_RAM),DEST(V_RAM)], 12 bytes total for each entry
+						// Could have a 'window' mode where [DMALEN,SOURCE,DEST,SRCSTRIDE,DSTSTRIDE,ROWS] can copy a rectangular region
+						// Could have a 'fill' mode where [DMALEN,DEST,DSTSTRIDE,ROWS,VALUE] can fill a window with VALUE
+						// DMA stops when DMALEN=0
+						// Flags can contain the mask value (to ignore writes), and other DMA mode control 
 					end
-					4'h5: begin
+
+					3'h5: begin
 						// 0x00000005
 						// wpal rs1, rd - write 24bit color value from rs1[23:0] onto palette index at rd
+						// TODO: error diffusion dither helpers for RGB values?
 					end
-					4'h6: begin
-						// 0x00000006
+
+					3'h6: begin
+						// imm16[2:0] contains the sub-op encoding
+						// 0x___SRRR6
+						// cmp rs1, rs2, rd - compare rs1 to rs2 and set compare code
 						// add rs1, rs2, rd
 						// sub rs1, rs2, rd
 						// div rs1, rs2, rd
 						// mul rs1, rs2, rd
+						// and rs1, rs2, rd
+						// or rs1, rs2, rd
+						// xor rs1, rs2, rd
+
+						rwe <= 1'b1;
+						rdin <= aluout;
 					end
-					4'h7: begin
-						// 0x00000007
-						// bne rs1, rs2, rd
-						// beq rs1, rs2, rd
-						// ble rs1, rs2, rd
-						// bl rs1, rs2, rd
-						// jmp rs2(rd)
-					end
-					4'h8: begin
-						// 0x00000008
-						// addi rs1, imm16, rd
-						// muli rs1, imm16, rd
-					end
-					4'h9: begin
-						// 0x00000009
-						// ret
-					end
-					4'hA: begin
-						// 0x0000000A
-						// wait for vsync
-					end
-					4'hB: begin
-						// 0x0000000B
-					end
-					4'hC: begin
-						// 0x0000000C
-					end
-					4'hD: begin
-						// 0x0000000D
-					end
-					4'hE: begin
-						// 0x0000000E
-					end
-					4'hF: begin
-						// 0x0000000F
+
+					3'h7: begin
+						// 0x_______7
+						// noop
+						rdin <= 32'hCECECECE; // Debug
 					end
 				endcase
 			end

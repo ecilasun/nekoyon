@@ -12,6 +12,7 @@ module sysbus(
 	output logic businitialized = 1'b0,
 	// CPU
 	input wire ifetch, // High when fetching instructions, low otherwise
+	input wire dcacheicachesync, // High when we need to flush D$ to memory
 	// UART
 	output wire uart_rxd_out,
 	input wire uart_txd_in,
@@ -266,7 +267,7 @@ SRAMandBootROM SRAMBOOTRAMDevice(
 wire gpu_gramre;
 wire [3:0] gpu_gramwe;
 wire [31:0] gpu_gramdin;
-wire [13:0] gpu_gramaddr;
+wire [15:0] gpu_gramaddr;
 wire [31:0] gpu_gramdout;
 
 gpu GPUDevice(
@@ -298,7 +299,7 @@ gpumemory GRAM(
 	.wea(gramwe),
 	// Port B: GPU access
 	.clkb(gpuclock),
-	.addrb(gpu_gramaddr),
+	.addrb(gpu_gramaddr[15:2]), // DWORD aligned
 	.dinb(gpu_gramdin),
 	.doutb(gpu_gramdout),
 	.enb(gpu_gramre | (|gpu_gramwe)),
@@ -375,6 +376,7 @@ localparam BUS_DDR3CACHEWAIT = 7;
 localparam BUS_DDR3UPDATECACHELINE = 8;
 localparam BUS_UPDATEFINALIZE = 9;
 localparam BUS_SPIRETIRE = 10;
+localparam BUS_FLUSHDCACHE = 11;
 
 wire busactive = busmode != BUS_IDLE;
 assign busbusy = busactive | busre | (|buswe);
@@ -403,7 +405,7 @@ always @(posedge cpuclock) begin
 				cwe <= 1'b0;
 				// Stop SPI writes
 				spiwwe <= 1'b0;
-
+				
 				if (deviceSelect[`DEV_DDR3] & (busre | (|buswe))) begin
 					currentcacheline <= cdout;
 					oldtag <= ctagout;
@@ -428,8 +430,24 @@ always @(posedge cpuclock) begin
 					busmode <= BUS_WRITE;
 				end else if (busre) begin
 					busmode <= BUS_READ;
-				end else
-					busmode <= BUS_IDLE;
+				end else begin
+					if (dcacheicachesync==1'b1)
+						busmode <= BUS_FLUSHDCACHE; // all D$ gets dumped to memory, and marked 'clean'
+					else
+						busmode <= BUS_IDLE;
+				end
+			end
+			
+			BUS_FLUSHDCACHE: begin
+				// TODO: Write back all of D$ to DDR3, mark tag[15] as 1'b0 (cache line clean)
+				// cwe <= 1'b1;
+				// for each cline
+				//   ddr3cmdin <= {1'b1, oldtag[14:0], cline, 1'b0, currentcacheline[127:0]};
+				//   ddr3cmdwe <= 1'b1;
+				//   ddr3cmdin <= {1'b1, oldtag[14:0], cline, 1'b1, currentcacheline[255:128]};
+				//   ddr3cmdwe <= 1'b1;
+				//   ctagin[15] <= 1'b1;
+				busmode <= BUS_IDLE;
 			end
 
 			BUS_READ: begin
