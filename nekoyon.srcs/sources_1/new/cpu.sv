@@ -37,6 +37,9 @@ logic ebreak;
 logic ecall;
 logic illegalinstruction;
 logic [31:0] mathresult;
+logic [31:0] mstatus;
+logic [31:0] mie;
+logic [31:0] mcause;
 
 localparam CPU_RESET		= 0;
 localparam CPU_RETIRE		= 1;
@@ -529,20 +532,21 @@ always @(posedge clock) begin
 				end else begin
 					instruction <= busdata;
 
-					// Trigger interrupts
+					// Copy CSR states to internal registers
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
 					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
-
-					// Update CSRs with internal counters
-					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
-					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
-					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
+					mstatus <= CSRReg[`CSR_MSTATUS];
+					csrread <= CSRReg[csrindex];
+					mie <= CSRReg[`CSR_MIE];
+					mcause <= CSRReg[`CSR_MCAUSE];
 
 					cpumode[CPU_DECODE] <= 1'b1;
 				end
 			end
 
 			cpumode[CPU_DECODE]: begin
+				// Default next PC
 				nextPC <= pc4;
 				// D$ mode
 				ifetch <= 1'b0;
@@ -590,10 +594,10 @@ always @(posedge clock) begin
 								12'b0000000_00000: begin // ECALL
 									// OS service call
 									// eg: li a7, 93 -> terminate application
-									ecall <= CSRReg[`CSR_MIE][3];
+									ecall <= mie[3];
 								end
 								12'b0000000_00001: begin // EBREAK
-									ebreak <= CSRReg[`CSR_MIE][3];
+									ebreak <= mie[3];
 								end
 								/*12'b0000000_00101: begin // WFI
 									// NOOP for single core
@@ -604,10 +608,10 @@ always @(posedge clock) begin
 								// privileged instructions
 								12'b0011000_00010: begin // MRET
 									// MACHINE MODE
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
-									CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
+									if (mcause[15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
+									if (mcause[15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
+									if (mcause[15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
+									CSRReg[`CSR_MSTATUS][3] <= mstatus[7];									// MIE=MPIE - set to previous machine interrupt enable state
 									CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
 									nextPC <= mepc;
 								end
@@ -625,7 +629,6 @@ always @(posedge clock) begin
 						end
 						// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
 						3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin 
-							csrread <= CSRReg[csrindex];
 							cpumode[CPU_UPDATECSR] <= 1'b1;
 						end
 						// Unknown
@@ -842,11 +845,11 @@ always @(posedge clock) begin
 					end
 
 					default: begin
-						illegalinstruction <= CSRReg[`CSR_MIE][3];
+						illegalinstruction <= mie[3];
 					end
 				endcase
 			end
-			
+
 			cpumode[CPU_FSTALL]: begin
 				faddvalid <= 1'b0;
 				fsubvalid <= 1'b0;
@@ -1077,14 +1080,16 @@ always @(posedge clock) begin
 				rwe <= 1'b0;
 				frwe <= 1'b0;
 
+				// Update CSRs with internal counters
+				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
+				{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
+				{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+
 				if (busbusy) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					// I$ mode
 					ifetch <= 1'b1;
-
-					// Copy CSR states to internal registers
-					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
 
 					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | ecall | timerinterrupt | externalinterrupt)) begin
 						mepc <= ebreak ? PC : nextPC;

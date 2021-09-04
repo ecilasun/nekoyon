@@ -41,6 +41,8 @@ logic [31:0] rdin = 32'd0;
 wire [31:0] rval1;
 wire [31:0] rval2;
 logic [2:0] aluop;
+logic [31:0] aluA;
+logic [31:0] aluB;
 
 always @(posedge clock) begin
 	vsyncID1 <= vsyncID;
@@ -68,8 +70,8 @@ gpuregisterfile GPURegFile(
 wire [31:0] aluout;
 gpualu GPUIntegerALU(
 	.aluop(aluop),
-	.rval1(rval1),
-	.rval2(rval2),
+	.rval1(aluA),
+	.rval2(aluB),
 	.aluout(aluout) );
 
 // -----------------------------------------------------------------------
@@ -83,8 +85,9 @@ localparam GPU_DECODE		= 3;
 localparam GPU_EXEC			= 4;
 localparam GPU_LOAD			= 5;
 localparam GPU_WAITVSYNC	= 6;
+localparam GPU_ALUWAIT		= 7;
 
-logic [6:0] gpumode;
+logic [7:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -139,6 +142,8 @@ always @(posedge clock) begin
 					gpumode[GPU_LOAD] <= 1'b1;
 				else if ((opcode == 3'h7) && (imm16[1:0]==2'b01)) // vsync
 					gpumode[GPU_WAITVSYNC] <= 1'b1;
+				else if (opcode == 3'h6) // alu
+					gpumode[GPU_ALUWAIT] <= 1'b1;
 				else
 					gpumode[GPU_RETIRE] <= 1'b1;
 
@@ -298,6 +303,7 @@ always @(posedge clock) begin
 						palettedata <= rval1[23:0];
 						palettewe <= 1'b1;
 					end
+
 					3'h6: begin
 						// imm16[2:0] contains the sub-op encoding
 						// 0x___SRRR6
@@ -309,9 +315,8 @@ always @(posedge clock) begin
 						// and rs1, rs2, rd
 						// or rs1, rs2, rd
 						// xor rs1, rs2, rd
-
-						rwe <= 1'b1;
-						rdin <= aluout;
+						aluA <= rval1;
+						aluB <= rval2;
 					end
 
 					3'h7: begin
@@ -335,6 +340,12 @@ always @(posedge clock) begin
 						endcase
 					end
 				endcase
+			end
+			
+			gpumode[GPU_ALUWAIT]: begin
+				rwe <= 1'b1;
+				rdin <= aluout;
+				gpumode[GPU_RETIRE] <= 1'b1;
 			end
 
 			gpumode[GPU_WAITVSYNC]: begin
