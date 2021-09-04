@@ -44,6 +44,10 @@ logic [2:0] aluop;
 logic [31:0] aluA;
 logic [31:0] aluB;
 
+logic [31:0] dmasource;
+logic [31:0] dmatarget;
+logic [15:0] dmalength;
+
 always @(posedge clock) begin
 	vsyncID1 <= vsyncID;
 	vsyncID2 <= vsyncID1;
@@ -68,6 +72,7 @@ gpuregisterfile GPURegFile(
 // -----------------------------------------------------------------------
 
 wire [31:0] aluout;
+
 gpualu GPUIntegerALU(
 	.aluop(aluop),
 	.rval1(aluA),
@@ -86,8 +91,9 @@ localparam GPU_EXEC			= 4;
 localparam GPU_LOAD			= 5;
 localparam GPU_WAITVSYNC	= 6;
 localparam GPU_ALUWAIT		= 7;
+localparam GPU_DMAKICK		= 8;
 
-logic [7:0] gpumode;
+logic [8:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -142,6 +148,8 @@ always @(posedge clock) begin
 					gpumode[GPU_LOAD] <= 1'b1;
 				else if ((opcode == 3'h7) && (imm16[1:0]==2'b01)) // vsync
 					gpumode[GPU_WAITVSYNC] <= 1'b1;
+				else if (opcode == 3'h4) // dma
+					gpumode[GPU_DMAKICK] <= 1'b1;
 				else if (opcode == 3'h6) // alu
 					gpumode[GPU_ALUWAIT] <= 1'b1;
 				else
@@ -277,21 +285,28 @@ always @(posedge clock) begin
 					end
 
 					3'h4: begin
-						// imm16[1:0] contains the sub-op encoding
-						// 0x___SRRR4
-						// dma.w rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 words
-						// dma.h rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 halfwords
-						// dma.b rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 bytes
-						// dma.mw rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 words, skipping zero
-						// dma.mh rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 halfwords, skipping zero
-						// dma.mb rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rd, for rs1 bytes, skipping zero
+						// rd[1:0] contains the sub-op encoding
+						// 0xIIIISRR4
+						// dma.w rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 words
+						// dma.h rs1, rs2, rd - copy halfwords starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 halfwords
+						// dma.b rs1, rs2, rd - copy bytes starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 bytes
+						// dma.mw rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 words, skipping zero
+						// dma.mh rs1, rs2, rd - copy halfwords starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 halfwords, skipping zero
+						// dma.mb rs1, rs2, rd - copy bytes starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 bytes, skipping zero
 
 						// TODO: Might do it with a DMA list in memory at rs1, with DMA flags inregister rs2
 						// and memory containing list of [DMALEN,SOURCE(G_RAM),DEST(V_RAM)], 12 bytes total for each entry
 						// Could have a 'window' mode where [DMALEN,SOURCE,DEST,SRCSTRIDE,DSTSTRIDE,ROWS] can copy a rectangular region
 						// Could have a 'fill' mode where [DMALEN,DEST,DSTSTRIDE,ROWS,VALUE] can fill a window with VALUE
 						// DMA stops when DMALEN=0
-						// Flags can contain the mask value (to ignore writes), and other DMA mode control 
+						// Flags can contain the mask value (to ignore writes), and other DMA mode control
+
+						dmasource <= rval1 + 32'd4; // Set next memory address ahead of time
+						dmatarget <= rval2;			// Target start late, keep same address
+						dmalength <= imm16;		    // DMA count in words
+						gramaddr <= rval1[16:0];    // Use first memory address incoming from register for this clock
+						vramaddr <= rval2[17:0];
+						
 					end
 
 					3'h5: begin
@@ -341,7 +356,25 @@ always @(posedge clock) begin
 					end
 				endcase
 			end
-			
+
+			gpumode[GPU_DMAKICK]: begin
+				if (dmalength == 16'd0) begin
+					gpumode[GPU_RETIRE] <= 1'b1;
+				end else begin
+					dmalength <= dmalength - 16'd1;
+
+					dmasource <= dmasource + 32'd4;
+					gramaddr <= dmasource[16:0];
+
+					dmatarget <= dmatarget + 32'd4;
+					vramaddr <= dmatarget[17:0];
+					vramdin <= gramdout;
+					vramwe <= 1'b1;
+
+					gpumode[GPU_DMAKICK] <= 1'b1;
+				end
+			end
+
 			gpumode[GPU_ALUWAIT]: begin
 				rwe <= 1'b1;
 				rdin <= aluout;
