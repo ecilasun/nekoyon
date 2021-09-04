@@ -41,8 +41,6 @@ logic [31:0] rdin = 32'd0;
 wire [31:0] rval1;
 wire [31:0] rval2;
 logic [2:0] aluop;
-logic carryout;
-logic [31:0] aluout;
 
 always @(posedge clock) begin
 	vsyncID1 <= vsyncID;
@@ -64,64 +62,15 @@ gpuregisterfile GPURegFile(
 	.rval2(rval2) );
 
 // -----------------------------------------------------------------------
-// ALU
+// Integer ALU
 // -----------------------------------------------------------------------
 
-// TODO: Use these pipelined versions from CPU side for mul and div
-/*DIV signeddivider (
-	.clk(clock),
-	.reset(reset),
-	.start(divstart),		// start signal
-	.busy(divbusy),			// calculation in progress
-	.dividend(dividend),		// dividend
-	.divisor(divisor),		// divisor
-	.quotient(quotient),	// result: quotient
-	.remainder(remainder)	// result: remainder
-);
-
-multiplier themul(
-    .clk(clock),
-    .reset(reset),
-    .start(mulstart),
-    .busy(mulbusy),           // calculation in progress
-    .func3(`F3_MUL),
-    .multiplicand(multiplicand),
-    .multiplier(multiplier),
-    .product(product) );*/
-
-always_comb begin
-	case (aluop)
-		3'b000: begin // cmp
-			case (1'b1)
-				rval1==rval2: aluout = {29'd0, 3'h001};
-				rval1<rval2:  aluout = {29'd0, 3'b010};
-				rval1>rval2:  aluout = {29'd0, 3'b100};
-			endcase
-		end
-		3'b001: begin // sub
-			aluout = rval1-rval2;
-			//aluout = rval1 + (~rval2 + 32'd1);
-		end
-		3'b010: begin // div - TODO: use pipelined version from CPU
-			; // aluout = rval1/rval2;
-		end
-		3'b011: begin // mul - TODO: use pipelined version from CPU
-			; // aluout = rval1*rval2;
-		end
-		3'b100: begin // add
-			{carryout, aluout} = rval1 + rval2;
-		end
-		3'b101: begin // and
-			aluout = rval1 & rval2;
-		end
-		3'b110: begin // or
-			aluout = rval1 | rval2;
-		end
-		3'b111: begin // xor
-			aluout = rval1 ^ rval2;
-		end
-	endcase
-end
+wire [31:0] aluout;
+gpualu GPUIntegerALU(
+	.aluop(aluop),
+	.rval1(rval1),
+	.rval2(rval2),
+	.aluout(aluout) );
 
 // -----------------------------------------------------------------------
 // Core
@@ -372,13 +321,16 @@ always @(posedge clock) begin
 
 						case (imm16[1:0])
 							2'b00: begin
-								; // noop
+								// noop
 							end
 							2'b01: begin // vsync
-								; //gpumode[GPU_WAITVSYNC] <= 1'b1; // NOTE: This is set above
+								//gpumode[GPU_WAITVSYNC] <= 1'b1; // NOTE: This is set above as it can't be set here
 							end
 							2'b10: begin // vpage
-								videopage <= rval1;
+								videopage <= rval1; // Set V-RAM write page
+							end
+							2'b11: begin
+								// reserved for future, acts as noop
 							end
 						endcase
 					end
@@ -386,7 +338,7 @@ always @(posedge clock) begin
 			end
 
 			gpumode[GPU_WAITVSYNC]: begin
-				if (vsyncID > vsyncrequestpoint) begin
+				if (vsyncID2 > vsyncrequestpoint) begin
 					gpumode[GPU_RETIRE] <= 1'b1;
 				end else begin
 					gpumode[GPU_WAITVSYNC] <= 1'b1;
