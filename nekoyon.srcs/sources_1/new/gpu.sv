@@ -304,9 +304,9 @@ always @(posedge clock) begin
 						dmasource <= rval1 + 32'd4; // Set next memory address ahead of time
 						dmatarget <= rval2;			// Target start late, keep same address
 						dmalength <= imm16;		    // DMA count in words
+
 						gramaddr <= rval1[16:0];    // Use first memory address incoming from register for this clock
-						vramaddr <= rval2[17:0];
-						
+						gramre <= 1'b1;				// Start reading and keep enabled until we're done
 					end
 
 					3'h5: begin
@@ -369,7 +369,7 @@ always @(posedge clock) begin
 					dmatarget <= dmatarget + 32'd4;
 					vramaddr <= dmatarget[17:0];
 					vramdin <= gramdout;
-					vramwe <= 1'b1;
+					vramwe <= 4'hF;
 
 					gpumode[GPU_DMAKICK] <= 1'b1;
 				end
