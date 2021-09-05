@@ -44,10 +44,10 @@ localparam CPU_FETCH		= 2;
 localparam CPU_DECODE		= 3;
 localparam CPU_EXEC			= 4;
 localparam CPU_FPUOP		= 5;
-localparam CPU_FPUFUSEDOP	= 6;
-localparam CPU_LOAD			= 7;
-localparam CPU_UPDATECSR	= 8;
-localparam CPU_TRAP			= 9;
+localparam CPU_LOAD			= 6;
+localparam CPU_UPDATECSR	= 7;
+localparam CPU_TRAP			= 8;
+localparam CPU_SYSOP		= 9;
 localparam CPU_MSTALL		= 10;
 localparam CPU_WBMRESULT	= 11;
 localparam CPU_FSTALL		= 12;
@@ -534,11 +534,6 @@ always @(posedge clock) begin
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
 					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
 
-					// Update CSRs with internal counters
-					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
-					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
-					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
-
 					cpumode[CPU_DECODE] <= 1'b1;
 				end
 			end
@@ -556,6 +551,11 @@ always @(posedge clock) begin
 				frdin <= 32'd0;
 				rwe <= 1'b0;
 				frwe <= 1'b0;
+
+				// Update CSRs with internal counters
+				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
+				{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
+				{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
 
 				// Take load or op branch, otherwise process store in-place
 				if (instrOneHot[`O_H_LOAD] | instrOneHot[`O_H_FLOAT_LDW]) begin
@@ -588,59 +588,14 @@ always @(posedge clock) begin
 					endcase
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else if (instrOneHot[`O_H_SYSTEM]) begin
-					case (func3)
-						// ECALL/EBREAK
-						3'b000: begin
-							case (func12)
-								12'b0000000_00000: begin // ECALL
-									// OS service call
-									// eg: li a7, 93 -> terminate application
-									ecall <= CSRReg[`CSR_MIE][3];
-								end
-								12'b0000000_00001: begin // EBREAK
-									ebreak <= CSRReg[`CSR_MIE][3];
-								end
-								/*12'b0000000_00101: begin // WFI
-									// NOOP for single core
-								end
-								12'b0001001_?????: begin // SFENCE.VMA
-									// NOT IMPLEMENTED
-								end*/
-								// privileged instructions
-								12'b0011000_00010: begin // MRET
-									// MACHINE MODE
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
-									if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
-									CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
-									CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
-									nextPC <= mepc;
-								end
-								/*12'b0001000_00010: begin // SRET
-									// SUPERVISOR MODE NOT IMPLEMENTED
-								end
-								12'b0000000_00010: begin // URET
-									// USER MORE NOT IMPLEMENTED
-								end*/
-								default: begin
-									// All other cases act as NOOP (WFI also drops here)
-								end
-							endcase
-							cpumode[CPU_RETIRE] <= 1'b1;
-						end
-						// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
-						3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin
-							csrread <= CSRReg[csrindex];
-							cpumode[CPU_UPDATECSR] <= 1'b1;
-						end
-						// Unknown
-						default: begin
-							cpumode[CPU_RETIRE] <= 1'b1;
-						end
-					endcase
+					cpumode[CPU_SYSOP] <= 1'b1;
 				end else if (instrOneHot[`O_H_FLOAT_MADD] || instrOneHot[`O_H_FLOAT_MSUB] || instrOneHot[`O_H_FLOAT_NMSUB] || instrOneHot[`O_H_FLOAT_NMADD]) begin
 					// Fused FPU operations
-					cpumode[CPU_FPUFUSEDOP] <= 1'b1;
+					fmaddstrobe <= instrOneHot[`O_H_FLOAT_MADD];
+					fmsubstrobe <= instrOneHot[`O_H_FLOAT_MSUB];
+					fnmsubstrobe <= instrOneHot[`O_H_FLOAT_NMSUB];
+					fnmaddstrobe <= instrOneHot[`O_H_FLOAT_NMADD];
+					cpumode[CPU_FMSTALL] <= 1'b1;
 				end else if (instrOneHot[`O_H_FLOAT_OP]) begin
 					// Regular FPU operations
 					cpumode[CPU_FPUOP] <= 1'b1;
@@ -654,14 +609,60 @@ always @(posedge clock) begin
 				end
 			end
 			
-			cpumode[CPU_FPUFUSEDOP]: begin
-				fmaddstrobe <= instrOneHot[`O_H_FLOAT_MADD];
-				fmsubstrobe <= instrOneHot[`O_H_FLOAT_MSUB];
-				fnmsubstrobe <= instrOneHot[`O_H_FLOAT_NMSUB];
-				fnmaddstrobe <= instrOneHot[`O_H_FLOAT_NMADD];
-				cpumode[CPU_FMSTALL] <= 1'b1;
+			cpumode[CPU_SYSOP]: begin
+				case (func3)
+					// ECALL/EBREAK
+					3'b000: begin
+						case (func12)
+							12'b0000000_00000: begin // ECALL
+								// OS service call
+								// eg: li a7, 93 -> terminate application
+								ecall <= CSRReg[`CSR_MIE][3];
+							end
+							12'b0000000_00001: begin // EBREAK
+								ebreak <= CSRReg[`CSR_MIE][3];
+							end
+							/*12'b0000000_00101: begin // WFI
+								// NOOP for single core
+							end
+							12'b0001001_?????: begin // SFENCE.VMA
+								// NOT IMPLEMENTED
+							end*/
+							// privileged instructions
+							12'b0011000_00010: begin // MRET
+								// MACHINE MODE
+								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
+								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
+								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
+								CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
+								CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
+								nextPC <= mepc;
+							end
+							/*12'b0001000_00010: begin // SRET
+								// SUPERVISOR MODE NOT IMPLEMENTED
+							end
+							12'b0000000_00010: begin // URET
+								// USER MORE NOT IMPLEMENTED
+							end*/
+							default: begin
+								// All other cases act as NOOP (WFI also drops here)
+							end
+						endcase
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+					// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
+					3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin
+						csrread <= CSRReg[csrindex];
+						cpumode[CPU_UPDATECSR] <= 1'b1;
+					end
+					// Unknown
+					default: begin
+						//illegalinstruction <= CSRReg[`CSR_MIE][3];
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+				endcase
 			end
-
+			
 			cpumode[CPU_FMSTALL]: begin
 				fmaddstrobe <= 1'b0;
 				fmsubstrobe <= 1'b0;
@@ -761,7 +762,7 @@ always @(posedge clock) begin
 					end
 					// Unknown F-OP instruction
 					default: begin
-						//illegalinstruction <= CSRReg[`CSR_MIE][3];
+						illegalinstruction <= CSRReg[`CSR_MIE][3];
 						cpumode[CPU_RETIRE] <= 1'b1;
 					end
 				endcase
@@ -828,25 +829,21 @@ always @(posedge clock) begin
 						rwe <= 1'b1;
 						rdin <= immpc;
 					end
-
 					instrOneHot[`O_H_LUI]: begin
 						rwe <= 1'b1;
 						rdin <= immed;
 					end
-
 					instrOneHot[`O_H_JAL]: begin
 						rwe <= 1'b1;
 						rdin <= pc4;
 						nextPC <= immpc;
 					end
-
 					instrOneHot[`O_H_OP], instrOneHot[`O_H_OP_IMM]: begin
 						if (~imathstart) begin
 							rwe <= 1'b1;
 							rdin <= aluout;
 						end
 					end
-
 					instrOneHot[`O_H_FENCE]: begin
 						case (func3)
 							3'b000: begin
@@ -858,21 +855,17 @@ always @(posedge clock) begin
 							end
 						endcase
 					end
-
 					instrOneHot[`O_H_JALR]: begin
 						rwe <= 1'b1;
 						rdin <= pc4;
 						nextPC <= immreach;
 					end
-
 					instrOneHot[`O_H_BRANCH]: begin
 						nextPC <= branchpc;
 					end
-
 					instrOneHot[`O_H_CUSTOM]: begin
 						// TODO: Some custom instruction extensions will go in here
 					end
-
 					default: begin
 						illegalinstruction <= CSRReg[`CSR_MIE][3];
 					end

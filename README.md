@@ -29,10 +29,15 @@ This version implements the following:
 - Audio output
   - Self-timing stereo output FIFO
 - Hardware I/O
-  - Keys
-  - LEDs
-  - GPIO
-- Bus arbiter / second core
+  - Keys (with an IRQ generated)
+  - LEDs (can do a read/write access if CPU state is persistent with LED output, so that code can save/restore the LED state)
+  - GPIO (need a 'in-out' mode select here)
+- DDR3/cache
+  - Investigate ways to optimize access and get better throughput
+- Bus arbiter
+  - To support a second core
+  - Need to make the FPU units shared, duplicate rest for now
+  - Cache will be an issue, need to duplicate it for each CPU (perhaps move it outside the 'bus' code?)
 
 ## License
 This is intended as a free IP. Please see the accompanying LICENSE.txt file for license terms.
