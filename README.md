@@ -23,10 +23,9 @@ This version implements the following:
   - vsync wait capability via frame IDs
   - Graphics memory (G-RAM, large enough for at least one back buffer)
   - G-RAM based command buffers
+  - DMA instruction to move data from G-RAM to V-RAM
 
 ## TODO
-- Graphics processor
-  - DMA instructions to move data from G-RAM to V-RAM
 - Audio output
   - Self-timing stereo output FIFO
 - Hardware I/O
