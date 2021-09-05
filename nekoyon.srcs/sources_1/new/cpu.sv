@@ -74,6 +74,8 @@ wire [4:0] csrindex;
 wire [31:0] immed;
 wire selectimmedasrval2;
 
+logic [4:0] csrRWindex = 5'd0;
+
 wire [31:0] rval1;
 wire [31:0] rval2;
 wire [31:0] frval1;
@@ -100,6 +102,7 @@ logic timerinterrupt = 1'b0;
 logic externalinterrupt = 1'b0;
 logic [31:0] mepc = 32'd0;
 logic [31:0] csrread = 32'd0;
+logic [31:0] mprevcause = 32'd0;
 
 // -----------------------------------------------------------------------
 // Integer register file
@@ -588,6 +591,7 @@ always @(posedge clock) begin
 					endcase
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else if (instrOneHot[`O_H_SYSTEM]) begin
+					csrRWindex <= csrindex;
 					cpumode[CPU_SYSOP] <= 1'b1;
 				end else if (instrOneHot[`O_H_FLOAT_MADD] || instrOneHot[`O_H_FLOAT_MSUB] || instrOneHot[`O_H_FLOAT_NMSUB] || instrOneHot[`O_H_FLOAT_NMADD]) begin
 					// Fused FPU operations
@@ -608,7 +612,7 @@ always @(posedge clock) begin
 					cpumode[CPU_EXEC] <= 1'b1;
 				end
 			end
-			
+
 			cpumode[CPU_SYSOP]: begin
 				case (func3)
 					// ECALL/EBREAK
@@ -631,11 +635,13 @@ always @(posedge clock) begin
 							// privileged instructions
 							12'b0011000_00010: begin // MRET
 								// MACHINE MODE
-								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd3) CSRReg[`CSR_MIP][3] <= 1'b0;	// Disable machine software interrupt pending
-								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd7) CSRReg[`CSR_MIP][7] <= 1'b0;	// Disable machine timer interrupt pending
-								if (CSRReg[`CSR_MCAUSE][15:0] == 16'd11) CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
-								CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];						// MIE=MPIE - set to previous machine interrupt enable state
-								CSRReg[`CSR_MSTATUS][7] <= 1'b0;										// Clear MPIE
+								case (CSRReg[`CSR_MCAUSE][15:0])
+									16'd3: CSRReg[`CSR_MIP][3] <= 1'b0;		// Disable machine software interrupt pending
+									16'd7: CSRReg[`CSR_MIP][7] <= 1'b0;		// Disable machine timer interrupt pending
+									16'd11: CSRReg[`CSR_MIP][11] <= 1'b0;	// Disable machine external interrupt pending
+								endcase
+								CSRReg[`CSR_MSTATUS][3] <= CSRReg[`CSR_MSTATUS][7];	// MIE=MPIE - Set to previous machine interrupt enable state (_could_ cheat and use 1'b1 since we most likely came here form an interrupt routine)
+								CSRReg[`CSR_MSTATUS][7] <= 1'b0;					// Clear MPIE (machine previous interrupt enable)
 								nextPC <= mepc;
 							end
 							/*12'b0001000_00010: begin // SRET
@@ -652,7 +658,7 @@ always @(posedge clock) begin
 					end
 					// CSRRW/CSRRS/CSSRRC/CSRRWI/CSRRSI/CSRRCI
 					3'b001, 3'b010, 3'b011, 3'b101, 3'b110, 3'b111: begin
-						csrread <= CSRReg[csrindex];
+						csrread <= CSRReg[csrRWindex];
 						cpumode[CPU_UPDATECSR] <= 1'b1;
 					end
 					// Unknown
@@ -662,7 +668,7 @@ always @(posedge clock) begin
 					end
 				endcase
 			end
-			
+
 			cpumode[CPU_FMSTALL]: begin
 				fmaddstrobe <= 1'b0;
 				fmsubstrobe <= 1'b0;
@@ -974,25 +980,25 @@ always @(posedge clock) begin
 				// Write to r/w CSR
 				case(func3)
 					3'b001: begin // CSRRW
-						CSRReg[csrindex] <= rval1;
+						CSRReg[csrRWindex] <= rval1;
 					end
 					3'b101: begin // CSRRWI
-						CSRReg[csrindex] <= immed;
+						CSRReg[csrRWindex] <= immed;
 					end
 					3'b010: begin // CSRRS
-						CSRReg[csrindex] <= csrread | rval1;
+						CSRReg[csrRWindex] <= csrread | rval1;
 					end
 					3'b110: begin // CSRRSI
-						CSRReg[csrindex] <= csrread | immed;
+						CSRReg[csrRWindex] <= csrread | immed;
 					end
 					3'b011: begin // CSSRRC
-						CSRReg[csrindex] <= csrread & (~rval1);
+						CSRReg[csrRWindex] <= csrread & (~rval1);
 					end
 					3'b111: begin // CSRRCI
-						CSRReg[csrindex] <= csrread & (~immed);
+						CSRReg[csrRWindex] <= csrread & (~immed);
 					end
 					default: begin // Unknown
-						CSRReg[csrindex] <= csrread;
+						CSRReg[csrRWindex] <= csrread;
 					end
 				endcase
 				cpumode[CPU_RETIRE] <= 1'b1;
@@ -1000,11 +1006,11 @@ always @(posedge clock) begin
 
 			cpumode[CPU_TRAP]: begin
 				// Common action in case of 'any' interrupt
-				CSRReg[`CSR_MSTATUS][7] <= CSRReg[`CSR_MSTATUS][3]; // Remember interrupt enable status in pending state (MPIE = MIE)
-				CSRReg[`CSR_MSTATUS][3] <= 1'b0; // Clear interrupts during handler
-				CSRReg[`CSR_MTVAL] <= PC; // Store last known program counter
-				CSRReg[`CSR_MSCRATCH] <= 32'd0; //instruction; // Store the offending instruction for IEX (NOTE: CPU can read it form address in CSR_MTVAL instead)
-				CSRReg[`CSR_MEPC] <= mepc; // Remember where to return (special case; ebreak returns to same PC as breakpoint)
+				CSRReg[`CSR_MSTATUS][7] <= 1'b1;			// Remember interrupt enable status in pending state (MPIE = MIE) (note, coming here means we don't need to read MIE (CSRReg[`CSR_MSTATUS][3]) but set MPIE to 1)
+				CSRReg[`CSR_MSTATUS][3] <= 1'b0;			// Clear interrupts during handler (MIE)
+				CSRReg[`CSR_MTVAL] <= PC;					// Store last known program counter
+				CSRReg[`CSR_MSCRATCH] <= 32'd0;				// Deprecated (Store the offending instruction for IEX (NOTE: CPU can read it form address in CSR_MTVAL instead))
+				CSRReg[`CSR_MEPC] <= mepc;					// Remember where to return (special case; ebreak returns to same PC as breakpoint)
 
 				// Jump to handler
 				// Set up non-vectored branch if lower 2 bits of MTVEC are 2'b00 (Direct mode)
