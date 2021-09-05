@@ -92,8 +92,9 @@ localparam GPU_LOAD			= 5;
 localparam GPU_WAITVSYNC	= 6;
 localparam GPU_ALUWAIT		= 7;
 localparam GPU_DMAKICK		= 8;
+localparam GPU_DMASYNC		= 9;
 
-logic [8:0] gpumode;
+logic [9:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -149,7 +150,7 @@ always @(posedge clock) begin
 				else if ((opcode == 3'h7) && (imm16[1:0]==2'b01)) // vsync
 					gpumode[GPU_WAITVSYNC] <= 1'b1;
 				else if (opcode == 3'h4) // dma
-					gpumode[GPU_DMAKICK] <= 1'b1;
+					gpumode[GPU_DMASYNC] <= 1'b1;
 				else if (opcode == 3'h6) // alu
 					gpumode[GPU_ALUWAIT] <= 1'b1;
 				else
@@ -314,7 +315,7 @@ always @(posedge clock) begin
 						// wpal rs1, rs2 - write 24bit color value from rs1[23:0] onto palette index at rs2
 						// TODO: error diffusion dither helpers for RGB values?
 						// ---- ---- ---- ---- IIII IIII DDDD MCCC
-						paletteaddress <= rval2;
+						paletteaddress <= rval2[7:0];
 						palettedata <= rval1[23:0];
 						palettewe <= 1'b1;
 					end
@@ -355,6 +356,12 @@ always @(posedge clock) begin
 						endcase
 					end
 				endcase
+			end
+			
+			gpumode[GPU_DMASYNC]: begin
+				dmasource <= dmasource + 32'd4;
+				gramaddr <= dmasource[16:0];
+				gpumode[GPU_DMAKICK] <= 1'b1;
 			end
 
 			gpumode[GPU_DMAKICK]: begin

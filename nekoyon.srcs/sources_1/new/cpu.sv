@@ -43,16 +43,17 @@ localparam CPU_RETIRE		= 1;
 localparam CPU_FETCH		= 2;
 localparam CPU_DECODE		= 3;
 localparam CPU_EXEC			= 4;
-localparam CPU_FPU			= 5;
-localparam CPU_LOAD			= 6;
-localparam CPU_UPDATECSR	= 7;
-localparam CPU_TRAP			= 8;
-localparam CPU_MSTALL		= 9;
-localparam CPU_WBMRESULT	= 10;
-localparam CPU_FSTALL		= 11;
-localparam CPU_FMSTALL		= 12;
+localparam CPU_FPUOP		= 5;
+localparam CPU_FPUFUSEDOP	= 6;
+localparam CPU_LOAD			= 7;
+localparam CPU_UPDATECSR	= 8;
+localparam CPU_TRAP			= 9;
+localparam CPU_MSTALL		= 10;
+localparam CPU_WBMRESULT	= 11;
+localparam CPU_FSTALL		= 12;
+localparam CPU_FMSTALL		= 13;
 
-logic [12:0] cpumode;
+logic [13:0] cpumode;
 
 logic [31:0] immreach;
 logic [31:0] immpc;
@@ -175,22 +176,22 @@ BALU BranchALU(
 // FPU
 // -----------------------------------------------------------------------
 
-logic fmaddvalid = 1'b0;
-logic fmsubvalid = 1'b0;
-logic fnmsubvalid = 1'b0;
-logic fnmaddvalid = 1'b0;
-logic faddvalid = 1'b0;
-logic fsubvalid = 1'b0;
-logic fmulvalid = 1'b0;
-logic fdivvalid = 1'b0;
-logic fi2fvalid = 1'b0;
-logic fui2fvalid = 1'b0;
-logic ff2ivalid = 1'b0;
-logic ff2uivalid = 1'b0;
-logic fsqrtvalid = 1'b0;
-logic feqvalid = 1'b0;
-logic fltvalid = 1'b0;
-logic flevalid = 1'b0;
+logic fmaddstrobe = 1'b0;
+logic fmsubstrobe = 1'b0;
+logic fnmsubstrobe = 1'b0;
+logic fnmaddstrobe = 1'b0;
+logic faddstrobe = 1'b0;
+logic fsubstrobe = 1'b0;
+logic fmulstrobe = 1'b0;
+logic fdivstrobe = 1'b0;
+logic fi2fstrobe = 1'b0;
+logic fui2fstrobe = 1'b0;
+logic ff2istrobe = 1'b0;
+logic ff2uistrobe = 1'b0;
+logic fsqrtstrobe = 1'b0;
+logic feqstrobe = 1'b0;
+logic fltstrobe = 1'b0;
+logic flestrobe = 1'b0;
 
 wire fmaddresultvalid;
 wire fmsubresultvalid;
@@ -229,62 +230,62 @@ wire [7:0] fleresult;
 
 fp_madd floatfmadd(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmaddvalid),
+	.s_axis_a_tvalid(fmaddstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmaddvalid),
+	.s_axis_b_tvalid(fmaddstrobe),
 	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fmaddvalid),
+	.s_axis_c_tvalid(fmaddstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fmaddresult),
 	.m_axis_result_tvalid(fmaddresultvalid) );
 
 fp_msub floatfmsub(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmsubvalid),
+	.s_axis_a_tvalid(fmsubstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmsubvalid),
+	.s_axis_b_tvalid(fmsubstrobe),
 	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fmsubvalid),
+	.s_axis_c_tvalid(fmsubstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fmsubresult),
 	.m_axis_result_tvalid(fmsubresultvalid) );
 
 fp_madd floatfnmsub(
 	.s_axis_a_tdata({~frval1[31], frval1[30:0]}), // -A
-	.s_axis_a_tvalid(fnmsubvalid),
+	.s_axis_a_tvalid(fnmsubstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fnmsubvalid),
+	.s_axis_b_tvalid(fnmsubstrobe),
 	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fnmsubvalid),
+	.s_axis_c_tvalid(fnmsubstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fnmsubresult),
 	.m_axis_result_tvalid(fnmsubresultvalid) );
 
 fp_msub floatfnmadd(
 	.s_axis_a_tdata({~frval1[31], frval1[30:0]}), // -A
-	.s_axis_a_tvalid(fnmaddvalid),
+	.s_axis_a_tvalid(fnmaddstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fnmaddvalid),
+	.s_axis_b_tvalid(fnmaddstrobe),
 	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fnmaddvalid),
+	.s_axis_c_tvalid(fnmaddstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fnmaddresult),
 	.m_axis_result_tvalid(fnmaddresultvalid) );
 
 fp_add floatadd(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(faddvalid),
+	.s_axis_a_tvalid(faddstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(faddvalid),
+	.s_axis_b_tvalid(faddstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(faddresult),
 	.m_axis_result_tvalid(faddresultvalid) );
 	
 fp_sub floatsub(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fsubvalid),
+	.s_axis_a_tvalid(fsubstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fsubvalid),
+	.s_axis_b_tvalid(fsubstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fsubresult),
 	.m_axis_result_tvalid(fsubresultvalid) );
@@ -292,39 +293,39 @@ fp_sub floatsub(
 
 fp_mul floatmul(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmulvalid),
+	.s_axis_a_tvalid(fmulstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmulvalid),
+	.s_axis_b_tvalid(fmulstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fmulresult),
 	.m_axis_result_tvalid(fmulresultvalid) );
 
 fp_div floatdiv(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fdivvalid),
+	.s_axis_a_tvalid(fdivstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fdivvalid),
+	.s_axis_b_tvalid(fdivstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fdivresult),
 	.m_axis_result_tvalid(fdivresultvalid) );
 
 fp_i2f floati2f(
 	.s_axis_a_tdata(rval1), // Integer source
-	.s_axis_a_tvalid(fi2fvalid),
+	.s_axis_a_tvalid(fi2fstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fi2fresult),
 	.m_axis_result_tvalid(fi2fresultvalid) );
 
 fp_ui2f floatui2f(
 	.s_axis_a_tdata(rval1), // Integer source
-	.s_axis_a_tvalid(fui2fvalid),
+	.s_axis_a_tvalid(fui2fstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fui2fresult),
 	.m_axis_result_tvalid(fui2fresultvalid) );
 
 fp_f2i floatf2i(
 	.s_axis_a_tdata(frval1), // Float source
-	.s_axis_a_tvalid(ff2ivalid),
+	.s_axis_a_tvalid(ff2istrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(ff2iresult),
 	.m_axis_result_tvalid(ff2iresultvalid) );
@@ -332,41 +333,41 @@ fp_f2i floatf2i(
 // NOTE: Sharing same logic with f2i here, ignoring sign bit instead
 fp_f2i floatf2ui(
 	.s_axis_a_tdata({1'b0,frval1[30:0]}), // abs(A) (float register is source)
-	.s_axis_a_tvalid(ff2uivalid),
+	.s_axis_a_tvalid(ff2uistrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(ff2uiresult),
 	.m_axis_result_tvalid(ff2uiresultvalid) );
 	
 fp_sqrt floatsqrt(
 	.s_axis_a_tdata({1'b0,frval1[30:0]}), // abs(A) (float register is source)
-	.s_axis_a_tvalid(fsqrtvalid),
+	.s_axis_a_tvalid(fsqrtstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fsqrtresult),
 	.m_axis_result_tvalid(fsqrtresultvalid) );
 
 fp_eq floateq(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(feqvalid),
+	.s_axis_a_tvalid(feqstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(feqvalid),
+	.s_axis_b_tvalid(feqstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(feqresult),
 	.m_axis_result_tvalid(feqresultvalid) );
 
 fp_lt floatlt(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fltvalid),
+	.s_axis_a_tvalid(fltstrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fltvalid),
+	.s_axis_b_tvalid(fltstrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fltresult),
 	.m_axis_result_tvalid(fltresultvalid) );
 
 fp_le floatle(
 	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(flevalid),
+	.s_axis_a_tvalid(flestrobe),
 	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(flevalid),
+	.s_axis_b_tvalid(flestrobe),
 	.aclk(clock),
 	.m_axis_result_tdata(fleresult),
 	.m_axis_result_tvalid(fleresultvalid) );
@@ -552,6 +553,9 @@ always @(posedge clock) begin
 				illegalinstruction <= 1'b0;
 				dcacheicachesync <= 1'b0;
 				rdin <= 32'd0;
+				frdin <= 32'd0;
+				rwe <= 1'b0;
+				frwe <= 1'b0;
 
 				// Take load or op branch, otherwise process store in-place
 				if (instrOneHot[`O_H_LOAD] | instrOneHot[`O_H_FLOAT_LDW]) begin
@@ -634,9 +638,12 @@ always @(posedge clock) begin
 							cpumode[CPU_RETIRE] <= 1'b1;
 						end
 					endcase
-				end else if (instrOneHot[`O_H_FLOAT_OP] || instrOneHot[`O_H_FLOAT_MADD] || instrOneHot[`O_H_FLOAT_MSUB] || instrOneHot[`O_H_FLOAT_NMSUB] || instrOneHot[`O_H_FLOAT_NMADD]) begin
-					// Handle FPU operations
-					cpumode[CPU_FPU] <= 1'b1;
+				end else if (instrOneHot[`O_H_FLOAT_MADD] || instrOneHot[`O_H_FLOAT_MSUB] || instrOneHot[`O_H_FLOAT_NMSUB] || instrOneHot[`O_H_FLOAT_NMADD]) begin
+					// Fused FPU operations
+					cpumode[CPU_FPUFUSEDOP] <= 1'b1;
+				end else if (instrOneHot[`O_H_FLOAT_OP]) begin
+					// Regular FPU operations
+					cpumode[CPU_FPUOP] <= 1'b1;
 				end else begin
 					// Pre-arrange math inputs
 					dividend <= rval1;
@@ -647,95 +654,119 @@ always @(posedge clock) begin
 				end
 			end
 			
-			cpumode[CPU_FPU]: begin
-				if (instrOneHot[`O_H_FLOAT_MADD] || instrOneHot[`O_H_FLOAT_MSUB] || instrOneHot[`O_H_FLOAT_NMSUB] || instrOneHot[`O_H_FLOAT_NMADD])
-					cpumode[CPU_FMSTALL] <= 1'b1;
-				else if (func7 ==`FSGNJ || func7 ==`FMVXW || func7 ==`FMVWX )
-					cpumode[CPU_RETIRE] <= 1'b1;
-				else
-					cpumode[CPU_FSTALL] <= 1'b1;
-				
-				case (1'b1)
-					instrOneHot[`O_H_FLOAT_OP]: begin
-						case (func7)
-							`FSGNJ: begin
-								frwe <= 1'b1;
-								case(func3)
-									3'b000: begin // FSGNJ
-										frdin <= {frval2[31], frval1[30:0]}; 
-									end
-									3'b001: begin  // FSGNJN
-										frdin <= {~frval2[31], frval1[30:0]};
-									end
-									3'b010: begin  // FSGNJX
-										frdin <= {frval1[31]^frval2[31], frval1[30:0]};
-									end
-								endcase
-							end
-							`FMVXW: begin
-								rwe <= 1'b1;
-								if (func3 == 3'b000) // FMVXW
-									rdin <= frval1;
-								else // FCLASS
-									rdin <= 32'd0; // TODO: classify the float (doesn't seem to be used by any code)
-							end
-							`FMVWX: begin
-								frwe <= 1'b1;
-								frdin <= multiplicand; // rval1; multiplicant already equals to a copy of rval1
-							end
-							`FADD: begin
-								faddvalid <= 1'b1;
-							end
-							`FSUB: begin
-								fsubvalid <= 1'b1;
-							end	
-							`FMUL: begin
-								fmulvalid <= 1'b1;
-							end	
-							`FDIV: begin
-								fdivvalid <= 1'b1;
-							end
-							`FCVTSW: begin	
-								fi2fvalid <= (rs2==5'b00000) ? 1'b1:1'b0; // Signed
-								fui2fvalid <= (rs2==5'b00001) ? 1'b1:1'b0; // Unsigned
-							end
-							`FCVTWS: begin
-								ff2ivalid <= (rs2==5'b00000) ? 1'b1:1'b0; // Signed
-								ff2uivalid <= (rs2==5'b00001) ? 1'b1:1'b0; // Unsigned
-							end
-							`FSQRT: begin
-								fsqrtvalid <= 1'b1;
-							end
-							`FEQ: begin
-								feqvalid <= (func3==3'b010) ? 1'b1:1'b0; // FEQ
-								fltvalid <= (func3==3'b001) ? 1'b1:1'b0; // FLT
-								flevalid <= (func3==3'b000) ? 1'b1:1'b0; // FLE
-							end
-							`FMAX: begin
-								fltvalid <= 1'b1; // FLT
-							end
-						endcase
-					end
-
-					instrOneHot[`O_H_FLOAT_MADD]: begin
-						fmaddvalid <= 1'b1;
-					end
-
-					instrOneHot[`O_H_FLOAT_MSUB]: begin
-						fmsubvalid <= 1'b1;
-					end
-
-					instrOneHot[`O_H_FLOAT_NMSUB]: begin
-						fnmsubvalid <= 1'b1; // is actually MADD!
-					end
-
-					instrOneHot[`O_H_FLOAT_NMADD]: begin
-						fnmaddvalid <= 1'b1; // is actually MSUB!
-					end
-
-				endcase
+			cpumode[CPU_FPUFUSEDOP]: begin
+				fmaddstrobe <= instrOneHot[`O_H_FLOAT_MADD];
+				fmsubstrobe <= instrOneHot[`O_H_FLOAT_MSUB];
+				fnmsubstrobe <= instrOneHot[`O_H_FLOAT_NMSUB];
+				fnmaddstrobe <= instrOneHot[`O_H_FLOAT_NMADD];
+				cpumode[CPU_FMSTALL] <= 1'b1;
 			end
 
+			cpumode[CPU_FMSTALL]: begin
+				fmaddstrobe <= 1'b0;
+				fmsubstrobe <= 1'b0;
+				fnmsubstrobe <= 1'b0;
+				fnmaddstrobe <= 1'b0;
+				if (fnmsubresultvalid | fnmaddresultvalid | fmsubresultvalid | fmaddresultvalid) begin
+					frwe <= 1'b1;
+					case (1'b1)
+						instrOneHot[`O_H_FLOAT_NMSUB]: begin
+							frdin <= fnmsubresult;
+						end
+						instrOneHot[`O_H_FLOAT_NMADD]: begin
+							frdin <= fnmaddresult;
+						end
+						instrOneHot[`O_H_FLOAT_MADD]: begin
+							frdin <= fmaddresult;
+						end
+						instrOneHot[`O_H_FLOAT_MSUB]: begin
+							frdin <= fmsubresult;
+						end
+					endcase
+					cpumode[CPU_RETIRE] <= 1'b1;
+				end else begin
+					cpumode[CPU_FMSTALL] <= 1'b1; // Stall further for fused float
+				end
+			end
+
+			cpumode[CPU_FPUOP]: begin
+				case (func7)
+					`FSGNJ: begin
+						frwe <= 1'b1;
+						case(func3)
+							3'b000: begin // FSGNJ
+								frdin <= {frval2[31], frval1[30:0]}; 
+							end
+							3'b001: begin  // FSGNJN
+								frdin <= {~frval2[31], frval1[30:0]};
+							end
+							3'b010: begin  // FSGNJX
+								frdin <= {frval1[31]^frval2[31], frval1[30:0]};
+							end
+						endcase
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+					`FMVXW: begin
+						rwe <= 1'b1;
+						if (func3 == 3'b000) // FMVXW
+							rdin <= frval1;
+						else // FCLASS
+							rdin <= 32'd0; // TODO: classify the float (doesn't seem to be used by any code)
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+					`FMVWX: begin
+						frwe <= 1'b1;
+						frdin <= rval1;
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+					`FADD: begin
+						faddstrobe <= 1'b1;
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FSUB: begin
+						fsubstrobe <= 1'b1;
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end	
+					`FMUL: begin
+						fmulstrobe <= 1'b1;
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end	
+					`FDIV: begin
+						fdivstrobe <= 1'b1;
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FCVTSW: begin	
+						fi2fstrobe <= (rs2==5'b00000) ? 1'b1:1'b0; // Signed
+						fui2fstrobe <= (rs2==5'b00001) ? 1'b1:1'b0; // Unsigned
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FCVTWS: begin
+						ff2istrobe <= (rs2==5'b00000) ? 1'b1:1'b0; // Signed
+						ff2uistrobe <= (rs2==5'b00001) ? 1'b1:1'b0; // Unsigned
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FSQRT: begin
+						fsqrtstrobe <= 1'b1;
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FEQ: begin
+						feqstrobe <= (func3==3'b010) ? 1'b1:1'b0; // FEQ
+						fltstrobe <= (func3==3'b001) ? 1'b1:1'b0; // FLT
+						flestrobe <= (func3==3'b000) ? 1'b1:1'b0; // FLE
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					`FMAX: begin
+						fltstrobe <= 1'b1; // FLT
+						cpumode[CPU_FSTALL] <= 1'b1;
+					end
+					// Unknown F-OP instruction
+					default: begin
+						//illegalinstruction <= CSRReg[`CSR_MIE][3];
+						cpumode[CPU_RETIRE] <= 1'b1;
+					end
+				endcase
+			end
+			
 			cpumode[CPU_LOAD]: begin
 				busre <= 1'b0;
 				if (busbusy) begin
@@ -849,18 +880,19 @@ always @(posedge clock) begin
 			end
 
 			cpumode[CPU_FSTALL]: begin
-				faddvalid <= 1'b0;
-				fsubvalid <= 1'b0;
-				fmulvalid <= 1'b0;
-				fdivvalid <= 1'b0;
-				fi2fvalid <= 1'b0;
-				fui2fvalid <= 1'b0;
-				ff2ivalid <= 1'b0;
-				ff2uivalid <= 1'b0;
-				fsqrtvalid <= 1'b0;
-				feqvalid <= 1'b0;
-				fltvalid <= 1'b0;
-				flevalid <= 1'b0;
+				// Stop float operation strobes
+				faddstrobe <= 1'b0;
+				fsubstrobe <= 1'b0;
+				fmulstrobe <= 1'b0;
+				fdivstrobe <= 1'b0;
+				fi2fstrobe <= 1'b0;
+				fui2fstrobe <= 1'b0;
+				ff2istrobe <= 1'b0;
+				ff2uistrobe <= 1'b0;
+				fsqrtstrobe <= 1'b0;
+				feqstrobe <= 1'b0;
+				fltstrobe <= 1'b0;
+				flestrobe <= 1'b0;
 
 				if  (fmulresultvalid | fdivresultvalid | fi2fresultvalid | fui2fresultvalid | ff2iresultvalid | ff2uiresultvalid | faddresultvalid | fsubresultvalid | fsqrtresultvalid | feqresultvalid | fltresultvalid | fleresultvalid) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
@@ -883,11 +915,11 @@ always @(posedge clock) begin
 						end
 						`FCVTSW: begin // NOTE: FCVT.S.WU is unsigned version
 							frwe <= 1'b1;
-							frdin <= rs2==5'b00000 ? fi2fresult : fui2fresult; // Result goes to float register (signed int to float)
+							frdin <= rs2==5'b00000 ? fi2fresult : fui2fresult; // Result goes to float register (signed/unsigned int to float)
 						end
 						`FCVTWS: begin // NOTE: FCVT.WU.S is unsigned version
 							rwe <= 1'b1;
-							rdin <= rs2==5'b00000 ? ff2iresult : ff2uiresult; // Result goes to integer register (float to signed int)
+							rdin <= rs2==5'b00000 ? ff2iresult : ff2uiresult; // Result goes to integer register (float to signed/unsigned int)
 						end
 						`FSQRT: begin
 							frwe <= 1'b1;
@@ -912,34 +944,6 @@ always @(posedge clock) begin
 					endcase
 				end else begin
 					cpumode[CPU_FSTALL] <= 1'b1; // Stall further for float op
-				end
-			end
-
-
-			cpumode[CPU_FMSTALL]: begin
-				fmaddvalid <= 1'b0;
-				fmsubvalid <= 1'b0;
-				fnmsubvalid <= 1'b0;
-				fnmaddvalid <= 1'b0;
-				if (fnmsubresultvalid | fnmaddresultvalid | fmsubresultvalid | fmaddresultvalid) begin
-					frwe <= 1'b1;
-					cpumode[CPU_RETIRE] <= 1'b1;
-					case (1'b1)
-						instrOneHot[`O_H_FLOAT_NMSUB]: begin
-							frdin <= fnmsubresult;
-						end
-						instrOneHot[`O_H_FLOAT_NMADD]: begin
-							frdin <= fnmaddresult;
-						end
-						instrOneHot[`O_H_FLOAT_MADD]: begin
-							frdin <= fmaddresult;
-						end
-						instrOneHot[`O_H_FLOAT_MSUB]: begin
-							frdin <= fmsubresult;
-						end
-					endcase
-				end else begin
-					cpumode[CPU_FMSTALL] <= 1'b1; // Stall further for fused float
 				end
 			end
 
@@ -1078,14 +1082,14 @@ always @(posedge clock) begin
 				rwe <= 1'b0;
 				frwe <= 1'b0;
 
-				// Copy CSR states to internal registers
-				internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
-
 				if (busbusy) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					// I$ mode
 					ifetch <= 1'b1;
+
+					// Copy CSR states to internal registers
+					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
 
 					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | ecall | timerinterrupt | externalinterrupt)) begin
 						mepc <= ebreak ? PC : nextPC;

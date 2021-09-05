@@ -36,6 +36,16 @@ ARCHITECTURE videosignalgen_a OF videosignalgen IS
 --	constant C_VSYNC  : integer := 5;
 --	constant C_VBACK  : integer := 20;
 
+ ---- 640x400 (@70Hz, 400p)
+--	constant C_RES_X  : integer := 640;
+--	constant C_RES_Y  : integer := 480;  
+--	constant C_HFRONT : integer := 16; 
+--	constant C_HSYNC  : integer := 96;
+--	constant C_HBACK  : integer := 48;
+--	constant C_VFRONT : integer := 12;
+--	constant C_VSYNC  : integer := 2;
+--	constant C_VBACK  : integer := 35;
+
  ---- 640x480 (480p)
 	constant C_RES_X  : integer := 640;
 	constant C_RES_Y  : integer := 480;  

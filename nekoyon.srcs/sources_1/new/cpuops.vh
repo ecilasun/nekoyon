@@ -252,13 +252,6 @@
 `define ALU_LU			4'd5
 `define ALU_GEU			4'd6
 
-// ======================== FLOAT ==============================
-`define ALU_FNONE       5'd0
-
-`define ALU_FADD        5'd1
-`define ALU_FMUL        5'd2
-`define ALU_FDIV        5'd3
-
 // ======================== CSR ==============================
 `define CSR_REGISTER_COUNT 24
 
