@@ -16,6 +16,13 @@ module gpu (
 	output logic [31:0] gramdin = 32'd0,
 	output logic [15:0] gramaddr = 16'd0,
 	input wire [31:0] gramdout,
+	// P-RAM
+	output logic pramre = 1'b0,
+	output logic [3:0] pramwe = 4'h0,
+	output logic [31:0] pramdin = 32'd0,
+	output logic [15:0] pramaddr = 16'd0,
+	input wire [31:0] pramdout,
+	// Palette
 	output logic palettewe = 1'b0,
 	output logic [7:0] paletteaddress = 8'h00,
 	output logic [23:0] palettedata = 24'h000 );
@@ -116,7 +123,7 @@ always @(posedge clock) begin
 
 			gpumode[GPU_FETCH]: begin
 				// Stop read
-				gramre <= 1'b0;
+				pramre <= 1'b0;
 				// Set up vsync request point
 				vsyncrequestpoint <= vsyncID2;
 				gpumode[GPU_DECODE] <= 1'b1;
@@ -127,16 +134,14 @@ always @(posedge clock) begin
 				// imm16            rd   rs2  rs1  op
 				// 0000000000000000 0000 0000 0000 0000
 			
-				// If high bit of memory address is set: VRAM
-				// If high bit of memory address is clear: G-RAM
-				// Default stack pointer is in G-RAM at 32'h0000FFF0, set by register r2
+				// Default stack pointer is in P-RAM at 32'h0000FFF0, set by register r2
 
-				opcode <= gramdout[2:0]; // instruction[3] is reserved
-				rs1 <= gramdout[7:4];
-				rs2 <= gramdout[11:8];
-				rd <= gramdout[15:12];
-				imm16 <= gramdout[31:16];
-				aluop <= gramdout[18:16]; // imm16[2:0]
+				opcode <= pramdout[2:0]; // instruction[3] is reserved
+				rs1 <= pramdout[7:4];
+				rs2 <= pramdout[11:8];
+				rd <= pramdout[15:12];
+				imm16 <= pramdout[31:16];
+				aluop <= pramdout[18:16]; // imm16[2:0]
 
 				gpumode[GPU_EXEC] <= 1'b1;
 			end
@@ -172,7 +177,7 @@ always @(posedge clock) begin
 						// bg rs2, rs1
 						// bge rs2, rs1
 						
-						// jmp zero encodes as 0x00000000, a.k.a. HALT
+						// jmp zero encodes as 0x00000000 (P-RAM start), a.k.a. HALT
 						
 						// Store return address in register so that call site may save it to stack
 						rwe <= 1'b1;
@@ -222,8 +227,10 @@ always @(posedge clock) begin
 						// store.w rs1, rs2- store word contained in rs1 at G-RAM address in rs2
 						// store.h rs1, rs2- store halfword contained in rs1[15:0] at G-RAM address in rs2
 						// store.b rs1, rs2 - store byte contained in rs1[7:0] at G-RAM address in rs2
+						
+						// NOTE: Memory addresses map to different places from point of view of the GPU
 
-						if (rval2[31] == 1'b0) begin // G-RAM
+						if (rval2[31:30] == 2'b01) begin // G-RAM - 0x40000000
 							gramaddr <= rval2[15:0];
 							if (imm16[1:0] == 2'b00) begin // store.w
 								gramdin <= rval1;
@@ -245,7 +252,7 @@ always @(posedge clock) begin
 							end else begin // imm16[1:0] == 2'b11
 								// noop
 							end
-						end else begin // V-RAM
+						end else if (rval2[31:30] == 2'b10) begin // V-RAM - 0x80000000
 							vramaddr <= rval2[16:0];
 							if (imm16[1:0] == 2'b00) begin // store.w
 								vramdin <= rval1;
@@ -267,6 +274,28 @@ always @(posedge clock) begin
 							end else begin // imm16[1:0] == 2'b11
 								// noop
 							end
+						end else if (rval2[31:30] == 2'b00) begin // P-RAM - 0x00000000
+							pramaddr <= rval2[15:0];
+							if (imm16[1:0] == 2'b00) begin // store.w
+								pramdin <= rval1;
+								pramwe <= 4'hF;
+							end else if (imm16[1:0] == 2'b01) begin // store.h
+								pramdin <= {rval1[15:0], rval1[15:0]};
+								case (rval2[1])
+									1'b1: begin pramwe <= 4'hC; end
+									1'b0: begin pramwe <= 4'h3; end
+								endcase
+							end else if (imm16[1:0] == 2'b10) begin // store.b
+								pramdin <= {rval1[7:0], rval1[7:0], rval1[7:0], rval1[7:0]};
+								case (rval2[1:0])
+									2'b11: begin pramwe <= 4'h8; end
+									2'b10: begin pramwe <= 4'h4; end
+									2'b01: begin pramwe <= 4'h2; end
+									2'b00: begin pramwe <= 4'h1; end
+								endcase
+							end else begin // imm16[1:0] == 2'b11
+								// noop
+							end
 						end
 					end
 
@@ -277,12 +306,15 @@ always @(posedge clock) begin
 						// load.h rs2, rd - load halfword contained at address rs2 in register rd
 						// load.b rs2, rd - load byte contained at address rs2 in register rd
 
-						//if (rval2[31] == 1'b0) begin // G-RAM
+						if (rval2[31:30] == 2'b01) begin // G-RAM - 0x40000000
 							gramaddr <= rval2[15:0];
 							gramre <= 1'b1;
-						//end else begin // V-RAM
+						end else if (rval2[31:30] == 2'b10) begin // V-RAM - 0x80000000
 							// NOTE: Memory reads from VRAM are not possible at this point
-						//end
+						end else if (rval2[31:30] == 2'b00) begin // P-RAM - 0x00000000
+							pramaddr <= rval2[15:0];
+							pramre <= 1'b1;
+						end
 					end
 
 					3'h4: begin
@@ -397,25 +429,53 @@ always @(posedge clock) begin
 			end
 
 			gpumode[GPU_LOAD]: begin
-				gramre <= 1'b0;
-				rwe <= 1'b1;
-				if (imm16[1:0] == 2'b00) begin // load.w
-					rdin <= gramdout[31:0];
-				end else if (imm16[1:0] == 2'b01) begin // load.h
-					case (gramaddr[1])
-						1'b1: begin rdin <= {16'd0, gramdout[31:16]}; end
-						1'b0: begin rdin <= {16'd0, gramdout[15:0]}; end
-					endcase
-				end else if (imm16[1:0] == 2'b10) begin // load.b
-					case (gramaddr[1:0])
-						2'b11: begin rdin <= {24'd0, gramdout[31:24]}; end
-						2'b10: begin rdin <= {24'd0, gramdout[23:16]}; end
-						2'b01: begin rdin <= {24'd0, gramdout[15:8]}; end
-						2'b00: begin rdin <= {24'd0, gramdout[7:0]}; end
-					endcase
-				end else begin // imm16[1:0] == 2'b11
-					// noop
+
+				// Pending load from G-RAM
+				if (gramre) begin
+					gramre <= 1'b0;
+					rwe <= 1'b1;
+					if (imm16[1:0] == 2'b00) begin // load.w
+						rdin <= gramdout[31:0];
+					end else if (imm16[1:0] == 2'b01) begin // load.h
+						case (gramaddr[1])
+							1'b1: begin rdin <= {16'd0, gramdout[31:16]}; end
+							1'b0: begin rdin <= {16'd0, gramdout[15:0]}; end
+						endcase
+					end else if (imm16[1:0] == 2'b10) begin // load.b
+						case (gramaddr[1:0])
+							2'b11: begin rdin <= {24'd0, gramdout[31:24]}; end
+							2'b10: begin rdin <= {24'd0, gramdout[23:16]}; end
+							2'b01: begin rdin <= {24'd0, gramdout[15:8]}; end
+							2'b00: begin rdin <= {24'd0, gramdout[7:0]}; end
+						endcase
+					end else begin // imm16[1:0] == 2'b11
+						// noop
+					end
 				end
+
+				// Pending load from P-RAM
+				if (pramre) begin
+					pramre <= 1'b0;
+					rwe <= 1'b1;
+					if (imm16[1:0] == 2'b00) begin // load.w
+						rdin <= pramdout[31:0];
+					end else if (imm16[1:0] == 2'b01) begin // load.h
+						case (pramaddr[1])
+							1'b1: begin rdin <= {16'd0, pramdout[31:16]}; end
+							1'b0: begin rdin <= {16'd0, pramdout[15:0]}; end
+						endcase
+					end else if (imm16[1:0] == 2'b10) begin // load.b
+						case (pramaddr[1:0])
+							2'b11: begin rdin <= {24'd0, pramdout[31:24]}; end
+							2'b10: begin rdin <= {24'd0, pramdout[23:16]}; end
+							2'b01: begin rdin <= {24'd0, pramdout[15:8]}; end
+							2'b00: begin rdin <= {24'd0, pramdout[7:0]}; end
+						endcase
+					end else begin // imm16[1:0] == 2'b11
+						// noop
+					end
+				end
+
 				gpumode[GPU_RETIRE] <= 1'b1;
 			end
 
@@ -424,12 +484,13 @@ always @(posedge clock) begin
 				rwe <= 1'b0;
 				palettewe <= 1'b0;
 				gramwe <= 4'h0;
+				pramwe <= 4'h0;
 				vramwe <= 4'h0;
 
-				// Set up address for instruction fetch
+				// Set up address for instruction fetch from P-RAM
 				PC <= nextPC;
-				gramaddr <= nextPC;
-				gramre <= 1'b1;
+				pramaddr <= nextPC;
+				pramre <= 1'b1;
 
 				gpumode[GPU_FETCH] <= 1'b1;
 			end

@@ -74,8 +74,9 @@ wire [`DEVICE_COUNT-1:0] deviceSelect = {
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0010 ? 1'b1 : 1'b0,	// 05: 0x8xxxxx08 UART read/write port					+DEV_UARTRW
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0001 ? 1'b1 : 1'b0,	// 04: 0x8xxxxx04 UART incoming queue byte available	+DEV_UARTBYTEAVAILABLE
 	{busaddress[31:28], busaddress[5:2]} == 8'b1000_0000 ? 1'b1 : 1'b0,	// 03: 0x8xxxxx00 UART outgoing queue full				+DEV_UARTSENDFIFOFULL
-	(busaddress[31:28]==4'b0010) ? 1'b1 : 1'b0,							// 02: 0x20000000 - 0x2FFFFFFF - G-RAM (64Kbytes)		+DEV_GRAM
-	(busaddress[31:28]==4'b0001) ? 1'b1 : 1'b0,							// 01: 0x10000000 - 0x1FFFFFFF - S-RAM (64Kbytes)		+DEV_SRAM
+	(busaddress[31:28]==4'b0011) ? 1'b1 : 1'b0,							// 02: 0x30000000 - 0x30010000 - P-RAM (64Kbytes)		+DEV_PRAM
+	(busaddress[31:28]==4'b0010) ? 1'b1 : 1'b0,							// 02: 0x20000000 - 0x20010000 - G-RAM (64Kbytes)		+DEV_GRAM
+	(busaddress[31:28]==4'b0001) ? 1'b1 : 1'b0,							// 01: 0x10000000 - 0x10010000 - S-RAM (64Kbytes)		+DEV_SRAM
 	(busaddress[31:28]==4'b0000) ? 1'b1 : 1'b0							// 00: 0x00000000 - 0x0FFFFFFF - DDR3 (256Mbytes)		+DEV_DDR3
 };
 
@@ -252,7 +253,7 @@ ddr3driver DDR3Device(
 	.ddr3readout(ddr3readout) );
 
 // ----------------------------------------------------------------------------
-// S-RAM (64Kbytes, also acts as boot ROM, and contains the default stack)
+// S-RAM (64Kbytes, also acts as boot ROM) - Scratch Memory
 // ----------------------------------------------------------------------------
 
 wire sramre = deviceSelect[`DEV_SRAM] ? busre : 1'b0;
@@ -421,6 +422,12 @@ wire [31:0] gpu_gramdin;
 wire [15:0] gpu_gramaddr;
 wire [31:0] gpu_gramdout;
 
+wire gpu_pramre;
+wire [3:0] gpu_pramwe;
+wire [31:0] gpu_pramdin;
+wire [15:0] gpu_pramaddr;
+wire [31:0] gpu_pramdout;
+
 gpu GPUDevice(
 	.clock(gpuclock),
 	.reset(reset),
@@ -438,13 +445,19 @@ gpu GPUDevice(
 	.gramdin(gpu_gramdin),
 	.gramaddr(gpu_gramaddr),
 	.gramdout(gpu_gramdout),
+	// P-RAM access (read/write)
+	.pramre(gpu_pramre),
+	.pramwe(gpu_pramwe),
+	.pramdin(gpu_pramdin),
+	.pramaddr(gpu_pramaddr),
+	.pramdout(gpu_pramdout),
 	// Color palette
 	.palettewe(palettewe),
 	.paletteaddress(paletteaddress),
 	.palettedata(palettedata) );
 
 // -----------------------------------------------------------------------
-// G-RAM (128Kbytes)
+// G-RAM (64Kbytes) - Graphics Memory
 // -----------------------------------------------------------------------
 
 wire gramre = deviceSelect[`DEV_GRAM] ? busre : 1'b0;
@@ -468,6 +481,32 @@ gpumemory GRAM(
 	.doutb(gpu_gramdout),
 	.enb(gpu_gramre | (|gpu_gramwe)),
 	.web(gpu_gramwe) );
+
+// -----------------------------------------------------------------------
+// P-RAM (32Kbytes) - Program Memory
+// -----------------------------------------------------------------------
+
+wire pramre = deviceSelect[`DEV_PRAM] ? busre : 1'b0;
+wire [3:0] pramwe = deviceSelect[`DEV_PRAM] ? buswe : 4'h0;
+wire [31:0] pramdin = deviceSelect[`DEV_PRAM] ? busdata : 32'd0;
+wire [13:0] pramaddr = deviceSelect[`DEV_PRAM] ? busaddress[15:2] : 0;
+wire [31:0] pramdout;
+
+gpumemory PRAM(
+	// Port A: CPU access
+	.clka(cpuclock),
+	.addra(pramaddr),
+	.dina(pramdin),
+	.douta(pramdout),
+	.ena(deviceSelect[`DEV_PRAM] & (pramre | (|pramwe))),
+	.wea(pramwe),
+	// Port B: GPU access
+	.clkb(gpuclock),
+	.addrb(gpu_pramaddr[15:2]), // DWORD aligned
+	.dinb(gpu_pramdin),
+	.doutb(gpu_pramdout),
+	.enb(gpu_pramre | (|gpu_pramwe)),
+	.web(gpu_pramwe) );
 
 // ----------------------------------------------------------------------------
 // External interrupts
@@ -655,6 +694,9 @@ always @(posedge cpuclock) begin
 						end
 						deviceSelect[`DEV_GRAM]: begin
 							dataout <= gramdout;
+						end
+						deviceSelect[`DEV_PRAM]: begin
+							dataout <= pramdout;
 						end
 						deviceSelect[`DEV_SPIRW]: begin
 							if(~spirempty) begin

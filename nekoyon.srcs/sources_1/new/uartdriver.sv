@@ -31,14 +31,14 @@ async_transmitter UART_transmit(
 	.TxD(uart_rxd_out),
 	.TxD_busy(uarttxbusy) );
 
-logic [7:0] uartsenddin = 8'd0;
 wire [7:0] uartsenddout;
-logic uartsendwe = 1'b0, uartsendre = 1'b0;
+wire uartsendwe;
+logic uartsendre = 1'b0;
 wire uartsendfull, uartsendempty, uartsendvalid;
 
 uartfifo UARTDataOutFIFO(
 	.full(uartsendfull),
-	.din(uartsenddin),
+	.din(busdata[7:0]),
 	.wr_en(uartsendwe),
 	.wr_clk(cpuclock), // Write using cpu clock
 	.empty(uartsendempty),
@@ -48,14 +48,7 @@ uartfifo UARTDataOutFIFO(
 	.rd_clk(clk10), // Read using UART base clock
 	.rst(reset) );
 
-always @(posedge cpuclock) begin
-	uartsendwe <= 1'b0;
-	// NOTE: CPU side checks for uartsendfull via software (read at 0x80000000) to decide whether to send or not
-	if (buswe) begin
-		uartsendwe <= 1'b1;
-		uartsenddin <= busdata[7:0];
-	end
-end
+assign uartsendwe = buswe;
 
 logic [1:0] uartwritemode = 2'b00;
 always @(posedge clk10) begin
