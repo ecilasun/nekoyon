@@ -21,8 +21,8 @@ This version implements the following:
 - Graphics processor
   - Dual V-RAM (scan-out buffers)
   - vsync wait capability via frame IDs
-  - Graphics memory (G-RAM, large enough for at least one back buffer)
-  - G-RAM based command buffers
+  - Graphics memory (G-RAM, large enough for at least one back buffer or some bitmaps)
+  - P-RAM based command buffers
   - DMA instruction to move data from G-RAM to V-RAM
 
 ## TODO
