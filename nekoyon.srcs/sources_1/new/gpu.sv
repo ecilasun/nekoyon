@@ -100,8 +100,9 @@ localparam GPU_WAITVSYNC	= 6;
 localparam GPU_ALUWAIT		= 7;
 localparam GPU_DMAKICK		= 8;
 localparam GPU_DMASYNC		= 9;
+localparam GPU_PALETTEKICK	= 10;
 
-logic [9:0] gpumode;
+logic [10:0] gpumode;
 
 always @(posedge clock) begin
 	if (reset) begin
@@ -154,7 +155,7 @@ always @(posedge clock) begin
 					gpumode[GPU_LOAD] <= 1'b1;
 				else if ((opcode == 3'h7) && (imm16[1:0]==2'b01)) // vsync
 					gpumode[GPU_WAITVSYNC] <= 1'b1;
-				else if (opcode == 3'h4) // dma
+				else if (opcode == 3'h4) // dma.w/dma.p
 					gpumode[GPU_DMASYNC] <= 1'b1;
 				else if (opcode == 3'h6) // alu
 					gpumode[GPU_ALUWAIT] <= 1'b1;
@@ -318,21 +319,10 @@ always @(posedge clock) begin
 					end
 
 					3'h4: begin
-						// rd[1:0] contains the sub-op encoding
+						// rd[0] contains the sub-op encoding
 						// 0xIIIISRR4
 						// dma.w rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 words
-						// dma.h rs1, rs2, rd - copy halfwords starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 halfwords
-						// dma.b rs1, rs2, rd - copy bytes starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 bytes
-						// dma.mw rs1, rs2, rd - copy words starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 words, skipping zero
-						// dma.mh rs1, rs2, rd - copy halfwords starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 halfwords, skipping zero
-						// dma.mb rs1, rs2, rd - copy bytes starting at G-RAM address rs2, to VRAM address starting at rs1, for imm16 bytes, skipping zero
-
-						// TODO: Might do it with a DMA list in memory at rs1, with DMA flags inregister rs2
-						// and memory containing list of [DMALEN,SOURCE(G_RAM),DEST(V_RAM)], 12 bytes total for each entry
-						// Could have a 'window' mode where [DMALEN,SOURCE,DEST,SRCSTRIDE,DSTSTRIDE,ROWS] can copy a rectangular region
-						// Could have a 'fill' mode where [DMALEN,DEST,DSTSTRIDE,ROWS,VALUE] can fill a window with VALUE
-						// DMA stops when DMALEN=0
-						// Flags can contain the mask value (to ignore writes), and other DMA mode control
+						// dma.p rs1, rs2, rd - copy words starting at G-RAM address rs2, to palette address starting at rs1, for imm16 words
 
 						dmasource <= rval1 + 32'd4; // Set next memory address ahead of time
 						dmatarget <= rval2;			// Target start late, keep same address
@@ -343,13 +333,8 @@ always @(posedge clock) begin
 					end
 
 					3'h5: begin
-						// 0x00000005
-						// wpal rs1, rs2 - write 24bit color value from rs1[23:0] onto palette index at rs2
-						// TODO: error diffusion dither helpers for RGB values?
-						// ---- ---- ---- ---- IIII IIII DDDD MCCC
-						paletteaddress <= rval2[7:0];
-						palettedata <= rval1[23:0];
-						palettewe <= 1'b1;
+						// 0x00000005 - unused
+
 					end
 
 					3'h6: begin
@@ -393,7 +378,10 @@ always @(posedge clock) begin
 			gpumode[GPU_DMASYNC]: begin
 				dmasource <= dmasource + 32'd4;
 				gramaddr <= dmasource[16:0];
-				gpumode[GPU_DMAKICK] <= 1'b1;
+				if (rd[0] == 1'b0)
+					gpumode[GPU_DMAKICK] <= 1'b1; // dma.w
+				else // rd[0] == 1'b1
+					gpumode[GPU_PALETTEKICK] <= 1'b1; // dma.p
 			end
 
 			gpumode[GPU_DMAKICK]: begin
@@ -411,6 +399,24 @@ always @(posedge clock) begin
 					vramwe <= 4'hF;
 
 					gpumode[GPU_DMAKICK] <= 1'b1;
+				end
+			end
+
+			gpumode[GPU_PALETTEKICK]: begin
+				if (dmalength == 16'd0) begin
+					gpumode[GPU_RETIRE] <= 1'b1;
+				end else begin
+					dmalength <= dmalength - 16'd1;
+
+					dmasource <= dmasource + 32'd4;
+					gramaddr <= dmasource[16:0];
+
+					dmatarget <= dmatarget + 32'd1; // Color palette is word-indexed
+					paletteaddress <= dmatarget[7:0];
+					palettedata <= gramdout[23:0];
+					palettewe <= 1'b1;
+
+					gpumode[GPU_PALETTEKICK] <= 1'b1;
 				end
 			end
 
