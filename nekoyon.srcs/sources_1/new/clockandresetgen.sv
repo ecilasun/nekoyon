@@ -15,7 +15,6 @@ wire clkAlocked, clkBlocked, ddr3clklocked;
 
 cpuclockgen CentralClock(
 	.clk_in1(sys_clock_i),
-	.spibaseclock(spibaseclock),
 	.wallclock(wallclock),
 	.cpuclock(cpuclock),
 	.locked(clkAlocked) );
@@ -24,6 +23,7 @@ videoclockgen VideoClocks(
 	.clk_in1(sys_clock_i),
 	.gpuclock(gpuclock),
 	.videoclock(videoclock),
+	.spibaseclock(spibaseclock),
 	.locked(clkBlocked) );
 
 

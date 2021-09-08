@@ -15,7 +15,6 @@ module VideoControllerGen(
 		output wire inDisplayWindow );
 
 logic [31:0] scanlinecache [0:127];
-wire [11:0] pixelY = (video_y-12'd32);
 
 // Each line in the video buffer contains 48 additional dwords (192 bytes) of extra storage at the end
 // This area can only be written to by the GPU
@@ -23,16 +22,17 @@ wire [11:0] pixelY = (video_y-12'd32);
 //           80 DWORDS              +48 DWORDS
 // |------------------------------|............|
 
+wire [11:0] pixelY = video_y;
 // In 640x400 region
-//assign dataEnable = (video_x < 640) && (video_y < 400);
+assign dataEnable = (video_x < 640) && (video_y < 400);
 // In 640*416 region (with no borders)
-//assign inDisplayWindow = (video_x < 640) && (video_y < 400); // 320*200 -> 640*400
+assign inDisplayWindow = (video_x < 640) && (video_y < 400); // 320*200 -> 640*400
 
+//wire [11:0] pixelY = (video_y-12'd32);
 // In 640x480 region
-assign dataEnable = (video_x < 640) && (video_y < 480);
-
+//assign dataEnable = (video_x < 640) && (video_y < 480);
 // In 640*416 region (with borders on top and bottom)
-assign inDisplayWindow = (video_y >= 32) && (video_x < 640) && (video_y < 448); // 320*208 -> 640*416
+//assign inDisplayWindow = (video_y >= 32) && (video_x < 640) && (video_y < 448); // 320*208 -> 640*416
 
 // video addrs = (Y<<9) + X where X is from 0 to 512 but we only use the 320 section for scanout
 wire [31:0] scanoutaddress = {pixelY[9:1], video_x[6:0]}; // stride of 48 at the end of scanline
