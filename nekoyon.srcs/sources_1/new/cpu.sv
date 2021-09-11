@@ -196,184 +196,39 @@ logic feqstrobe = 1'b0;
 logic fltstrobe = 1'b0;
 logic flestrobe = 1'b0;
 
-wire fmaddresultvalid;
-wire fmsubresultvalid;
-wire fnmsubresultvalid; 
-wire fnmaddresultvalid;
+wire FPUResultValid;
+wire [31:0] FPUResult;
 
-wire faddresultvalid;
-wire fsubresultvalid;
-wire fmulresultvalid;
-wire fdivresultvalid;
-wire fi2fresultvalid;
-wire fui2fresultvalid;
-wire ff2iresultvalid;
-wire ff2uiresultvalid;
-wire fsqrtresultvalid;
-wire feqresultvalid;
-wire fltresultvalid;
-wire fleresultvalid;
+FPU FloatingPointMathUnit(
+	.clock(clock),
 
-wire [31:0] fmaddresult;
-wire [31:0] fmsubresult;
-wire [31:0] fnmsubresult;
-wire [31:0] fnmaddresult;
-wire [31:0] faddresult;
-wire [31:0] fsubresult;
-wire [31:0] fmulresult;
-wire [31:0] fdivresult;
-wire [31:0] fi2fresult;
-wire [31:0] fui2fresult;
-wire [31:0] ff2iresult;
-wire [31:0] ff2uiresult;
-wire [31:0] fsqrtresult;
-wire [7:0] feqresult;
-wire [7:0] fltresult;
-wire [7:0] fleresult;
+	// Inputs
+	.frval1(frval1),
+	.frval2(frval2),
+	.frval3(frval3),
+	.rval1(rval1), // i2f input
 
-fp_madd floatfmadd(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmaddstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmaddstrobe),
-	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fmaddstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fmaddresult),
-	.m_axis_result_tvalid(fmaddresultvalid) );
+	// Operation select strobe
+	.fmaddstrobe(fmaddstrobe),
+	.fmsubstrobe(fmsubstrobe),
+	.fnmsubstrobe(fnmsubstrobe),
+	.fnmaddstrobe(fnmaddstrobe),
+	.faddstrobe(faddstrobe),
+	.fsubstrobe(fsubstrobe),
+	.fmulstrobe(fmulstrobe),
+	.fdivstrobe(fdivstrobe),
+	.fi2fstrobe(fi2fstrobe),
+	.fui2fstrobe(fui2fstrobe),
+	.ff2istrobe(ff2istrobe),
+	.ff2uistrobe(ff2uistrobe),
+	.fsqrtstrobe(fsqrtstrobe),
+	.feqstrobe(feqstrobe),
+	.fltstrobe(fltstrobe),
+	.flestrobe(flestrobe),
 
-fp_msub floatfmsub(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmsubstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmsubstrobe),
-	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fmsubstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fmsubresult),
-	.m_axis_result_tvalid(fmsubresultvalid) );
-
-fp_madd floatfnmsub(
-	.s_axis_a_tdata({~frval1[31], frval1[30:0]}), // -A
-	.s_axis_a_tvalid(fnmsubstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fnmsubstrobe),
-	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fnmsubstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fnmsubresult),
-	.m_axis_result_tvalid(fnmsubresultvalid) );
-
-fp_msub floatfnmadd(
-	.s_axis_a_tdata({~frval1[31], frval1[30:0]}), // -A
-	.s_axis_a_tvalid(fnmaddstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fnmaddstrobe),
-	.s_axis_c_tdata(frval3),
-	.s_axis_c_tvalid(fnmaddstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fnmaddresult),
-	.m_axis_result_tvalid(fnmaddresultvalid) );
-
-fp_add floatadd(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(faddstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(faddstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(faddresult),
-	.m_axis_result_tvalid(faddresultvalid) );
-	
-fp_sub floatsub(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fsubstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fsubstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fsubresult),
-	.m_axis_result_tvalid(fsubresultvalid) );
-
-
-fp_mul floatmul(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fmulstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fmulstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fmulresult),
-	.m_axis_result_tvalid(fmulresultvalid) );
-
-fp_div floatdiv(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fdivstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fdivstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fdivresult),
-	.m_axis_result_tvalid(fdivresultvalid) );
-
-fp_i2f floati2f(
-	.s_axis_a_tdata(rval1), // Integer source
-	.s_axis_a_tvalid(fi2fstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fi2fresult),
-	.m_axis_result_tvalid(fi2fresultvalid) );
-
-fp_ui2f floatui2f(
-	.s_axis_a_tdata(rval1), // Integer source
-	.s_axis_a_tvalid(fui2fstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fui2fresult),
-	.m_axis_result_tvalid(fui2fresultvalid) );
-
-fp_f2i floatf2i(
-	.s_axis_a_tdata(frval1), // Float source
-	.s_axis_a_tvalid(ff2istrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(ff2iresult),
-	.m_axis_result_tvalid(ff2iresultvalid) );
-
-// NOTE: Sharing same logic with f2i here, ignoring sign bit instead
-fp_f2i floatf2ui(
-	.s_axis_a_tdata({1'b0,frval1[30:0]}), // abs(A) (float register is source)
-	.s_axis_a_tvalid(ff2uistrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(ff2uiresult),
-	.m_axis_result_tvalid(ff2uiresultvalid) );
-	
-fp_sqrt floatsqrt(
-	.s_axis_a_tdata({1'b0,frval1[30:0]}), // abs(A) (float register is source)
-	.s_axis_a_tvalid(fsqrtstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fsqrtresult),
-	.m_axis_result_tvalid(fsqrtresultvalid) );
-
-fp_eq floateq(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(feqstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(feqstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(feqresult),
-	.m_axis_result_tvalid(feqresultvalid) );
-
-fp_lt floatlt(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(fltstrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(fltstrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fltresult),
-	.m_axis_result_tvalid(fltresultvalid) );
-
-fp_le floatle(
-	.s_axis_a_tdata(frval1),
-	.s_axis_a_tvalid(flestrobe),
-	.s_axis_b_tdata(frval2),
-	.s_axis_b_tvalid(flestrobe),
-	.aclk(clock),
-	.m_axis_result_tdata(fleresult),
-	.m_axis_result_tvalid(fleresultvalid) );
+	// Output
+	.resultvalid(FPUResultValid),
+	.result(FPUResult) );
 
 // -----------------------------------------------------------------------
 // Address generation
@@ -584,7 +439,7 @@ always @(posedge clock) begin
 								1'b0: begin buswe <= 4'h3; end
 							endcase
 						end
-						default: begin // DWORD
+						3'b010: begin // DWORD
 							dataout <= (instrOneHot[`O_H_FLOAT_STW]) ? frval2 : rval2;
 							buswe <= 4'hF;
 						end
@@ -674,22 +529,10 @@ always @(posedge clock) begin
 				fmsubstrobe <= 1'b0;
 				fnmsubstrobe <= 1'b0;
 				fnmaddstrobe <= 1'b0;
-				if (fnmsubresultvalid | fnmaddresultvalid | fmsubresultvalid | fmaddresultvalid) begin
+
+				if (FPUResultValid) begin
 					frwe <= 1'b1;
-					case (1'b1)
-						instrOneHot[`O_H_FLOAT_NMSUB]: begin
-							frdin <= fnmsubresult;
-						end
-						instrOneHot[`O_H_FLOAT_NMADD]: begin
-							frdin <= fnmaddresult;
-						end
-						instrOneHot[`O_H_FLOAT_MADD]: begin
-							frdin <= fmaddresult;
-						end
-						instrOneHot[`O_H_FLOAT_MSUB]: begin
-							frdin <= fmsubresult;
-						end
-					endcase
+					frdin <= FPUResult;
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					cpumode[CPU_FMSTALL] <= 1'b1; // Stall further for fused float
@@ -879,7 +722,6 @@ always @(posedge clock) begin
 			end
 
 			cpumode[CPU_FSTALL]: begin
-				// Stop float operation strobes
 				faddstrobe <= 1'b0;
 				fsubstrobe <= 1'b0;
 				fmulstrobe <= 1'b0;
@@ -893,54 +735,29 @@ always @(posedge clock) begin
 				fltstrobe <= 1'b0;
 				flestrobe <= 1'b0;
 
-				if  (fmulresultvalid | fdivresultvalid | fi2fresultvalid | fui2fresultvalid | ff2iresultvalid | ff2uiresultvalid | faddresultvalid | fsubresultvalid | fsqrtresultvalid | feqresultvalid | fltresultvalid | fleresultvalid) begin
-					cpumode[CPU_RETIRE] <= 1'b1;
+				if  (FPUResultValid) begin
 					case (func7)
-						`FADD: begin
+						`FADD, `FSUB, `FMUL, `FDIV, `FSQRT,`FCVTSW: begin
 							frwe <= 1'b1;
-							frdin <= faddresult;
+							frdin <= FPUResult;
 						end
-						`FSUB: begin
-							frwe <= 1'b1;
-							frdin <= fsubresult;
-						end
-						`FMUL: begin
-							frwe <= 1'b1;
-							frdin <= fmulresult;
-						end
-						`FDIV: begin
-							frwe <= 1'b1;
-							frdin <= fdivresult;
-						end
-						`FCVTSW: begin // NOTE: FCVT.S.WU is unsigned version
-							frwe <= 1'b1;
-							frdin <= rs2==5'b00000 ? fi2fresult : fui2fresult; // Result goes to float register (signed/unsigned int to float)
-						end
-						`FCVTWS: begin // NOTE: FCVT.WU.S is unsigned version
+						`FCVTWS: begin
 							rwe <= 1'b1;
-							rdin <= rs2==5'b00000 ? ff2iresult : ff2uiresult; // Result goes to integer register (float to signed/unsigned int)
-						end
-						`FSQRT: begin
-							frwe <= 1'b1;
-							frdin <= fsqrtresult;
+							rdin <= FPUResult;
 						end
 						`FEQ: begin
 							rwe <= 1'b1;
-							if (func3==3'b010) // FEQ
-								rdin <= {31'd0,feqresult[0]};
-							else if (func3==3'b001) // FLT
-								rdin <= {31'd0,fltresult[0]};
-							else //if (func3==3'b000) // FLE
-								rdin <= {31'd0,fleresult[0]};
+							rdin <= {31'd0,FPUResult[0]};
 						end
 						`FMIN: begin
 							frwe <= 1'b1;
 							if (func3==3'b000) // FMIN
-								frdin <= fltresult[0]==1'b0 ? frval2 : frval1;
+								frdin <= FPUResult[0] ? frval1 : frval2;
 							else // FMAX
-								frdin <= fltresult[0]==1'b0 ? frval1 : frval2;
+								frdin <= FPUResult[0] ? frval2 : frval1;
 						end
 					endcase
+					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					cpumode[CPU_FSTALL] <= 1'b1; // Stall further for float op
 				end
