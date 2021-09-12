@@ -44,6 +44,7 @@ wire [7:0] aluOneHot = {
 	aluop == 3'b000 ? 1'b1:1'b0 };
 
 always_comb begin
+	// aluout will generate a latch
 	case (1'b1)
 		aluOneHot[0]: begin // cmp
 			case (1'b1)

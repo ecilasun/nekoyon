@@ -5,6 +5,7 @@
 module decoder(
 	input wire [31:0] instruction,		// Raw input instruction
 	output wire [18:0] instrOneHot,		// Current instruction class
+	output logic decie,					// Illegal instruction
 	output logic [3:0] aluop,			// Current ALU op
 	output logic [3:0] bluop,			// Current BLU op
 	output logic [2:0] func3,			// Sub-instruction
@@ -82,6 +83,7 @@ always_comb begin
 
 	case (1'b1)
 		instrOneHot[`O_H_OP]: begin
+			decie = 1'b0;
 			immed = 32'd0;
 			bluop = `ALU_NONE;
 			if (instruction[25]==1'b0) begin
@@ -107,6 +109,7 @@ always_comb begin
 		end
 
 		instrOneHot[`O_H_OP_IMM]: begin
+			decie = 1'b0;
 			immed = {{21{instruction[31]}},instruction[30:20]};
 			bluop = `ALU_NONE;
 			case (instruction[14:12])
@@ -121,37 +124,43 @@ always_comb begin
 			endcase
 		end
 
-		instrOneHot[`O_H_LUI]: begin
+		instrOneHot[`O_H_LUI]: begin	
+			decie = 1'b0;
 			immed = {instruction[31:12], 12'd0};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_FLOAT_STW], instrOneHot[`O_H_STORE]: begin
+			decie = 1'b0;
 			immed = {{20{instruction[31]}}, instruction[31:25], instruction[11:7]};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_FLOAT_LDW], instrOneHot[`O_H_LOAD]: begin
+			decie = 1'b0;
 			immed = {{20{instruction[31]}}, instruction[31:20]};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_JAL]: begin
+			decie = 1'b0;
 			immed = {{12{instruction[31]}}, instruction[19:12], instruction[20], instruction[30:21], 1'b0};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_JALR]: begin
+			decie = 1'b0;
 			immed = {{20{instruction[31]}}, instruction[31:20]};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_BRANCH]: begin
+			decie = 1'b0;
 			immed = {{20{instruction[31]}}, instruction[7], instruction[30:25], instruction[11:8], 1'b0};
 			aluop = `ALU_NONE;
 			case (instruction[14:12])
@@ -167,36 +176,42 @@ always_comb begin
 		end
 
 		instrOneHot[`O_H_AUPC]: begin
+			decie = 1'b0;
 			immed = {instruction[31:12], 12'd0};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_FENCE]: begin
+			decie = 1'b0;
 			immed = 32'd0;
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_SYSTEM]: begin
+			decie = 1'b0;
 			immed = {27'd0, instruction[19:15]};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_FLOAT_OP]: begin
+			decie = 1'b0;
 			immed = 32'd0;
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		instrOneHot[`O_H_FLOAT_MSUB], instrOneHot[`O_H_FLOAT_MADD], instrOneHot[`O_H_FLOAT_NMSUB], instrOneHot[`O_H_FLOAT_NMADD]: begin
+			decie = 1'b0;
 			immed = 32'd0;
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;
 		end
 
 		default: begin
+			decie = 1'b1;
 			immed = 32'd0;
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;

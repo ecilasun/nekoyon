@@ -61,6 +61,7 @@ logic [31:0] pc4;
 logic [31:0] branchpc;
 
 wire [18:0] instrOneHot;
+wire decie;
 wire [3:0] aluop;
 wire [3:0] bluop;
 wire [2:0] func3;
@@ -141,6 +142,7 @@ floatregisterfile FloatRegFile(
 decoder InstructionDecoder(
 	.instruction(instruction),
 	.instrOneHot(instrOneHot),
+	.decie(decie),
 	.aluop(aluop),
 	.bluop(bluop),
 	.func3(func3),
@@ -403,7 +405,6 @@ always @(posedge clock) begin
 				ifetch <= 1'b0;
 				ebreak <= 1'b0;
 				ecall <= 1'b0;
-				illegalinstruction <= 1'b0;
 				dcacheicachesync <= 1'b0;
 				rdin <= 32'd0;
 				frdin <= 32'd0;
@@ -458,6 +459,10 @@ always @(posedge clock) begin
 				end else if (instrOneHot[`O_H_FLOAT_OP]) begin
 					// Regular FPU operations
 					cpumode[CPU_FPUOP] <= 1'b1;
+				end else if (decie) begin
+					// Depending on this flag, we skip over illegal instructions or not
+					illegalinstruction <= CSRReg[`CSR_MIE][3];
+					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					// Pre-arrange math inputs
 					dividend <= rval1;
@@ -517,8 +522,7 @@ always @(posedge clock) begin
 						cpumode[CPU_UPDATECSR] <= 1'b1;
 					end
 					// Unknown
-					default: begin
-						//illegalinstruction <= CSRReg[`CSR_MIE][3];
+					3'b100: begin
 						cpumode[CPU_RETIRE] <= 1'b1;
 					end
 				endcase
@@ -609,12 +613,10 @@ always @(posedge clock) begin
 						fltstrobe <= 1'b1; // FLT
 						cpumode[CPU_FSTALL] <= 1'b1;
 					end
-					// Unknown F-OP instruction
 					default: begin
-						illegalinstruction <= CSRReg[`CSR_MIE][3];
 						cpumode[CPU_RETIRE] <= 1'b1;
 					end
-				endcase
+					endcase
 			end
 			
 			cpumode[CPU_LOAD]: begin
@@ -714,9 +716,6 @@ always @(posedge clock) begin
 					end
 					instrOneHot[`O_H_CUSTOM]: begin
 						// TODO: Some custom instruction extensions will go in here
-					end
-					default: begin
-						illegalinstruction <= CSRReg[`CSR_MIE][3];
 					end
 				endcase
 			end

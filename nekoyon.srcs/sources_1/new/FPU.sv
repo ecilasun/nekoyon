@@ -71,6 +71,7 @@ assign resultvalid =	fmaddresultvalid | fmsubresultvalid |  fnmsubresultvalid | 
 						ff2iresultvalid | ff2uiresultvalid | fsqrtresultvalid | feqresultvalid | fltresultvalid | fleresultvalid;
 
 always_comb begin
+	// result will generate a latch
 	case (1'b1)
 		fmaddresultvalid:	result = fmaddresult;
 		fmsubresultvalid:	result = fmsubresult;

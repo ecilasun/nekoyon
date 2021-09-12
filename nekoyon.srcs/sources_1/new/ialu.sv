@@ -22,11 +22,12 @@ wire [9:0] aluOneHot = {
 	aluop == `ALU_AND ? 1'b1:1'b0 };
 
 // Integer ALU
+// aluout will generate a latch
 always_comb begin
 	case (1'b1)
 		// Integer ops
 		aluOneHot[9]: aluout = val1 + val2;
-		aluOneHot[8]: aluout = val1 + (~val2 + 32'd1);
+		aluOneHot[8]: aluout = val1 - val2; //'//val1 + (~val2 + 32'd1);
 		aluOneHot[7]: aluout = val1 << val2[4:0];
 		aluOneHot[6]: aluout = $signed(val1) < $signed(val2) ? 32'd1 : 32'd0;
 		aluOneHot[5]: aluout = val1 < val2 ? 32'd1 : 32'd0;

@@ -17,6 +17,7 @@ wire [5:0] aluonehot = {
 	bluop == `ALU_GEU ? 1'b1 : 1'b0 };
 
 // Branch ALU
+// branchout will generate a latch
 always_comb begin
 	case (1'b1)
 		// BRANCH ALU
