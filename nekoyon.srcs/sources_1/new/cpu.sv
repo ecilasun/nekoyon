@@ -35,14 +35,15 @@ logic [31:0] nextPC;
 logic [31:0] instruction;
 logic ebreak;
 logic ecall;
+logic wfi = 1'b0;
 logic illegalinstruction;
 logic [31:0] mathresult;
 
 localparam CPU_RESET		= 0;
 localparam CPU_RETIRE		= 1;
 localparam CPU_FETCH		= 2;
-localparam CPU_DECODE		= 3;
-localparam CPU_EXEC			= 4;
+localparam CPU_DISPATCH		= 3;
+localparam CPU_REGULAROP	= 4;
 localparam CPU_FPUOP		= 5;
 localparam CPU_LOAD			= 6;
 localparam CPU_UPDATECSR	= 7;
@@ -254,7 +255,7 @@ wire [31:0] quotientu;
 wire [31:0] remainder;
 wire [31:0] remainderu;
 
-wire isexecuting = (cpumode[CPU_EXEC]==1'b1) ? 1'b1 : 1'b0;
+wire isexecuting = (cpumode[CPU_REGULAROP]==1'b1) ? 1'b1 : 1'b0;
 wire mulstart = isexecuting & (aluop==`ALU_MUL) & (instrOneHot[`O_H_OP]);
 wire divstart = isexecuting & (aluop==`ALU_DIV | aluop==`ALU_REM) & (instrOneHot[`O_H_OP]);
 
@@ -388,17 +389,21 @@ always @(posedge clock) begin
 				if (busbusy) begin
 					cpumode[CPU_FETCH] <= 1'b1;
 				end else begin
-					instruction <= busdata;
+				
+					// Hold the previous WFI instruction if we're waiting
+					if (~wfi)
+						instruction <= busdata;
 
 					// Trigger interrupts
+					// These are also helpers to get us out of the WFI loop
 					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
 					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
 
-					cpumode[CPU_DECODE] <= 1'b1;
+					cpumode[CPU_DISPATCH] <= 1'b1;
 				end
 			end
 
-			cpumode[CPU_DECODE]: begin
+			cpumode[CPU_DISPATCH]: begin
 				// Default next PC
 				nextPC <= pc4;
 				// D$ mode
@@ -465,11 +470,12 @@ always @(posedge clock) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
 					// Pre-arrange math inputs
+					// Integer mul/div unit will kick in regularop phase 
 					dividend <= rval1;
 					divisor <= rval2;
 					multiplicand <= rval1;
 					multiplier <= rval2;
-					cpumode[CPU_EXEC] <= 1'b1;
+					cpumode[CPU_REGULAROP] <= 1'b1;
 				end
 			end
 
@@ -486,12 +492,13 @@ always @(posedge clock) begin
 							12'b0000000_00001: begin // EBREAK
 								ebreak <= CSRReg[`CSR_MIE][3];
 							end
-							/*12'b0000000_00101: begin // WFI
-								// NOOP for single core
+							12'b0001000_00101: begin // WFI
+								// Will put this hart into wait-for-interrupts mode
+								wfi <= 1'b1;
 							end
 							12'b0001001_?????: begin // SFENCE.VMA
 								// NOT IMPLEMENTED
-							end*/
+							end
 							// privileged instructions
 							12'b0011000_00010: begin // MRET
 								// MACHINE MODE
@@ -504,14 +511,11 @@ always @(posedge clock) begin
 								CSRReg[`CSR_MSTATUS][7] <= 1'b0;					// Clear MPIE (machine previous interrupt enable)
 								nextPC <= mepc;
 							end
-							/*12'b0001000_00010: begin // SRET
+							12'b0001000_00010: begin // SRET
 								// SUPERVISOR MODE NOT IMPLEMENTED
 							end
 							12'b0000000_00010: begin // URET
 								// USER MORE NOT IMPLEMENTED
-							end*/
-							default: begin
-								// All other cases act as NOOP (WFI also drops here)
 							end
 						endcase
 						cpumode[CPU_RETIRE] <= 1'b1;
@@ -669,7 +673,7 @@ always @(posedge clock) begin
 				end
 			end
 
-			cpumode[CPU_EXEC]: begin
+			cpumode[CPU_REGULAROP]: begin
 				if ((instrOneHot[`O_H_OP] || instrOneHot[`O_H_OP_IMM]) && imathstart)
 					cpumode[CPU_MSTALL] <= 1'b1;
 				else
@@ -908,11 +912,19 @@ always @(posedge clock) begin
 
 					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | ecall | timerinterrupt | externalinterrupt)) begin
 						mepc <= ebreak ? PC : nextPC;
+						// No longer waiting for an interrupt, exit WFI mode so we can execute code as usual
+						wfi <= 1'b0;
 						cpumode[CPU_TRAP] <= 1'b1;
 					end else begin
-						PC <= nextPC;
-						busaddress <= nextPC;
-						busre <= 1'b1;
+						// In WFI mode we don't step the PC
+						// and also don't read from memory, but
+						// just wait for an external interrupt to arrive
+						// looping over the WFI instruction.
+						if (~wfi) begin
+							PC <= nextPC;
+							busaddress <= nextPC;
+							busre <= 1'b1;
+						end
 						cpumode[CPU_FETCH] <= 1'b1;
 					end
 				end

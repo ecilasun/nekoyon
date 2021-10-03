@@ -548,6 +548,8 @@ wire [15:0] ctagout;
 // (which only happens when tag for the cache line changes in Neko architecture)
 // For now, software will read of first 2048 DWORDs from DDR3 to force writebacks of
 // dirty pages to memory, ensuring I$ can see these when it tries to access them.
+// However, if I$ has already accessed these pages, it will think it's already read them.
+// Therefore, it's essential to implement the FENCE.I instruction.
 cache IDCache(
 	.clock(cpuclock),
 	.we(cwe),
@@ -640,7 +642,7 @@ always @(posedge cpuclock) begin
 						busmode <= BUS_IDLE;
 				end
 			end
-			
+
 			BUS_FLUSHDCACHE: begin
 				// TODO: Write back all of D$ to DDR3, mark tag[15] as 1'b0 (cache line clean)
 				// cwe <= 1'b1;
@@ -650,6 +652,7 @@ always @(posedge cpuclock) begin
 				//   ddr3cmdin <= {1'b1, oldtag[14:0], cline, 1'b1, currentcacheline[255:128]};
 				//   ddr3cmdwe <= 1'b1;
 				//   ctagin[15] <= 1'b1;
+				// Also invalidate I$ lines by writing illegal tags to force re-reads 
 				busmode <= BUS_IDLE;
 			end
 
