@@ -365,15 +365,6 @@ end
 // -----------------------------------------------------------------------
 
 always @(posedge clock) begin
-	if (cpumode[CPU_DISPATCH]) begin
-		// Update interrupt status
-		internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
-		timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
-		externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
-	end
-end
-
-always @(posedge clock) begin
 
 	if (reset) begin
 
@@ -402,6 +393,10 @@ always @(posedge clock) begin
 					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
 					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
 					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+
+					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
+					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
+					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
 
 					instruction <= busdata;
 					cpumode[CPU_DISPATCH] <= 1'b1;
@@ -936,6 +931,9 @@ always @(posedge clock) begin
 					wfi <= 1'b0;
 					cpumode[CPU_TRAP] <= 1'b1;
 				end else begin
+					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
+					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
+					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
 					cpumode[CPU_WFI] <= 1'b1;
 				end
 			end
