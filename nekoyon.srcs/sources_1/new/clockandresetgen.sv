@@ -26,7 +26,6 @@ videoclockgen VideoClocks(
 	.spibaseclock(spibaseclock),
 	.locked(clkBlocked) );
 
-
 DDR3Clocks DDR3MemoryClock(
 	.clk_in1(sys_clock_i),
 	.sys_clk_in(sys_clk_in),

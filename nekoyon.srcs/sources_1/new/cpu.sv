@@ -53,8 +53,9 @@ localparam CPU_MSTALL		= 10;
 localparam CPU_WBMRESULT	= 11;
 localparam CPU_FSTALL		= 12;
 localparam CPU_FMSTALL		= 13;
+localparam CPU_WFI			= 14;
 
-logic [13:0] cpumode;
+logic [14:0] cpumode;
 
 logic [31:0] immreach;
 logic [31:0] immpc;
@@ -259,10 +260,8 @@ wire isexecuting = (cpumode[CPU_REGULAROP]==1'b1) ? 1'b1 : 1'b0;
 wire mulstart = isexecuting & (aluop==`ALU_MUL) & (instrOneHot[`O_H_OP]);
 wire divstart = isexecuting & (aluop==`ALU_DIV | aluop==`ALU_REM) & (instrOneHot[`O_H_OP]);
 
-logic [31:0] dividend = 32'd0;
-logic [31:0] divisor = 32'd1;
-logic [31:0] multiplicand = 32'd0;
-logic [31:0] multiplier = 32'd0;
+logic [31:0] Ma = 32'd0;
+logic [31:0] Mb = 32'd1;
 
 multiplier themul(
     .clk(clock),
@@ -270,17 +269,17 @@ multiplier themul(
     .start(mulstart),
     .busy(mulbusy),           // calculation in progress
     .func3(func3),
-    .multiplicand(multiplicand),
-    .multiplier(multiplier),
+    .multiplicand(Ma),
+    .multiplier(Mb),
     .product(product) );
 
 DIVU unsigneddivider (
 	.clk(clock),
 	.reset(reset),
-	.start(divstart),		// start signal
+	.start(divstart),
 	.busy(divbusyu),		// calculation in progress
-	.dividend(dividend),	// dividend
-	.divisor(divisor),		// divisor
+	.dividend(Ma),
+	.divisor(Mb),
 	.quotient(quotientu),	// result: quotient
 	.remainder(remainderu)	// result: remainer
 );
@@ -288,10 +287,10 @@ DIVU unsigneddivider (
 DIV signeddivider (
 	.clk(clock),
 	.reset(reset),
-	.start(divstart),		// start signal
+	.start(divstart),
 	.busy(divbusy),			// calculation in progress
-	.dividend(dividend),		// dividend
-	.divisor(divisor),		// divisor
+	.dividend(Ma),
+	.divisor(Mb),
 	.quotient(quotient),	// result: quotient
 	.remainder(remainder)	// result: remainder
 );
@@ -366,6 +365,15 @@ end
 // -----------------------------------------------------------------------
 
 always @(posedge clock) begin
+	if (cpumode[CPU_DISPATCH]) begin
+		// Update interrupt status
+		internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
+		timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
+		externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
+	end
+end
+
+always @(posedge clock) begin
 
 	if (reset) begin
 
@@ -388,17 +396,14 @@ always @(posedge clock) begin
 				busre <= 1'b0;
 				if (busbusy) begin
 					cpumode[CPU_FETCH] <= 1'b1;
-				end else begin
-				
-					// Hold the previous WFI instruction if we're waiting
-					if (~wfi)
-						instruction <= busdata;
+				end else begin		
 
-					// Trigger interrupts
-					// These are also helpers to get us out of the WFI loop
-					timerinterrupt <= CSRReg[`CSR_MIE][7] & timertrigger;
-					externalinterrupt <= (CSRReg[`CSR_MIE][11] & irqtrigger);
+					// Update CSRs with internal counters so the CPU can read them
+					{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
+					{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
+					{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
 
+					instruction <= busdata;
 					cpumode[CPU_DISPATCH] <= 1'b1;
 				end
 			end
@@ -416,10 +421,10 @@ always @(posedge clock) begin
 				rwe <= 1'b0;
 				frwe <= 1'b0;
 
-				// Update CSRs with internal counters
-				{CSRReg[`CSR_CYCLEHI], CSRReg[`CSR_CYCLELO]} <= internalcyclecounter;
-				{CSRReg[`CSR_TIMEHI], CSRReg[`CSR_TIMELO]} <= internalwallclockcounter2;
-				{CSRReg[`CSR_RETIHI], CSRReg[`CSR_RETILO]} <= internalretirecounter;
+				// Pre-arrange math inputs
+				// Integer mul/div unit will kick in regularop phase 
+				Ma <= rval1;
+				Mb <= rval2;
 
 				// Take load or op branch, otherwise process store in-place
 				if (instrOneHot[`O_H_LOAD] | instrOneHot[`O_H_FLOAT_LDW]) begin
@@ -469,12 +474,6 @@ always @(posedge clock) begin
 					illegalinstruction <= CSRReg[`CSR_MIE][3];
 					cpumode[CPU_RETIRE] <= 1'b1;
 				end else begin
-					// Pre-arrange math inputs
-					// Integer mul/div unit will kick in regularop phase 
-					dividend <= rval1;
-					divisor <= rval2;
-					multiplicand <= rval1;
-					multiplier <= rval2;
 					cpumode[CPU_REGULAROP] <= 1'b1;
 				end
 			end
@@ -738,7 +737,7 @@ always @(posedge clock) begin
 				fltstrobe <= 1'b0;
 				flestrobe <= 1'b0;
 
-				if  (FPUResultValid) begin
+				if (FPUResultValid) begin
 					case (func7)
 						`FADD, `FSUB, `FMUL, `FDIV, `FSQRT,`FCVTSW: begin
 							frwe <= 1'b1;
@@ -907,9 +906,6 @@ always @(posedge clock) begin
 					// I$ mode
 					ifetch <= 1'b1;
 
-					// Copy CSR states to internal registers
-					internaltimecmp <= {CSRReg[`CSR_TIMECMPHI], CSRReg[`CSR_TIMECMPLO]};
-
 					if (CSRReg[`CSR_MSTATUS][3] & (illegalinstruction | ebreak | ecall | timerinterrupt | externalinterrupt)) begin
 						mepc <= ebreak ? PC : nextPC;
 						// No longer waiting for an interrupt, exit WFI mode so we can execute code as usual
@@ -924,9 +920,23 @@ always @(posedge clock) begin
 							PC <= nextPC;
 							busaddress <= nextPC;
 							busre <= 1'b1;
+							cpumode[CPU_FETCH] <= 1'b1;
+						end else begin
+							// Hold the previous WFI instruction if we're waiting
+							cpumode[CPU_WFI] <= 1'b1;
 						end
-						cpumode[CPU_FETCH] <= 1'b1;
 					end
+				end
+			end
+			
+			cpumode[CPU_WFI]: begin
+				if (CSRReg[`CSR_MSTATUS][3] & (timerinterrupt | externalinterrupt)) begin
+					mepc <= ebreak ? PC : nextPC;
+					// No longer waiting for an interrupt, exit WFI mode so we can execute code as usual
+					wfi <= 1'b0;
+					cpumode[CPU_TRAP] <= 1'b1;
+				end else begin
+					cpumode[CPU_WFI] <= 1'b1;
 				end
 			end
 

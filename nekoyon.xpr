@@ -63,20 +63,20 @@
     <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="arty-a7-100"/>
-    <Option Name="WTXSimLaunchSim" Val="136"/>
+    <Option Name="WTXSimLaunchSim" Val="151"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="164"/>
-    <Option Name="WTModelSimExportSim" Val="164"/>
-    <Option Name="WTQuestaExportSim" Val="164"/>
-    <Option Name="WTIesExportSim" Val="164"/>
-    <Option Name="WTVcsExportSim" Val="164"/>
-    <Option Name="WTRivieraExportSim" Val="164"/>
-    <Option Name="WTActivehdlExportSim" Val="164"/>
+    <Option Name="WTXSimExportSim" Val="170"/>
+    <Option Name="WTModelSimExportSim" Val="170"/>
+    <Option Name="WTQuestaExportSim" Val="170"/>
+    <Option Name="WTIesExportSim" Val="170"/>
+    <Option Name="WTVcsExportSim" Val="170"/>
+    <Option Name="WTRivieraExportSim" Val="170"/>
+    <Option Name="WTActivehdlExportSim" Val="170"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
     <Option Name="XSimRadix" Val="hex"/>
     <Option Name="XSimTimeUnit" Val="ns"/>
@@ -135,7 +135,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/ip/videoclockgen/videoclockgen.xci">
+      <File Path="$PSRCDIR/sources_1/ip/cpuclockgen/cpuclockgen.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -640,8 +640,8 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
-    <FileSet Name="cpuclockgen" Type="BlockSrcs" RelSrcDir="$PSRCDIR/cpuclockgen" RelGenDir="$PGENDIR/cpuclockgen">
-      <File Path="$PSRCDIR/sources_1/ip/cpuclockgen/cpuclockgen.xci">
+    <FileSet Name="videoclockgen" Type="BlockSrcs" RelSrcDir="$PSRCDIR/videoclockgen" RelGenDir="$PGENDIR/videoclockgen">
+      <File Path="$PSRCDIR/sources_1/ip/videoclockgen/videoclockgen.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -649,7 +649,7 @@
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TopModule" Val="cpuclockgen"/>
+        <Option Name="TopModule" Val="videoclockgen"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -871,7 +871,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="cpuclockgen_synth_1" Type="Ft3:Synth" SrcSet="cpuclockgen" Part="xc7a100tcsg324-1" ConstrsSet="cpuclockgen" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/cpuclockgen_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/cpuclockgen_synth_1">
+    <Run Id="videoclockgen_synth_1" Type="Ft3:Synth" SrcSet="videoclockgen" Part="xc7a100tcsg324-1" ConstrsSet="videoclockgen" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/videoclockgen_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/videoclockgen_synth_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2021"/>
         <Step Id="synth_design"/>
@@ -1207,7 +1207,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="cpuclockgen_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tcsg324-1" ConstrsSet="cpuclockgen" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="cpuclockgen_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/cpuclockgen_impl_1">
+    <Run Id="videoclockgen_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tcsg324-1" ConstrsSet="videoclockgen" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="videoclockgen_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/videoclockgen_impl_1">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2021"/>
         <Step Id="init_design"/>
