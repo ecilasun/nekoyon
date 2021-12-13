@@ -30,7 +30,7 @@ assign instrOneHot = {
 	instruction[6:2]==`OPCODE_JAL ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_JALR ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_BRANCH ? 1'b1:1'b0,
-	instruction[6:2]==`OPCODE_AUPC ? 1'b1:1'b0,
+	instruction[6:2]==`OPCODE_AUIPC ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_FENCE ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_SYSTEM ? 1'b1:1'b0,
 	instruction[6:2]==`OPCODE_FLOAT_OP ? 1'b1:1'b0,
@@ -80,7 +80,7 @@ always @(instruction) begin
 	func12 = instruction[31:20];
 end
 
-always @(instruction) begin
+always @(instruction, instrOneHot) begin
 
 	selectimmedasrval2 = instrOneHot[`O_H_OP_IMM];
 	decie = ~(|instrOneHot); // If no bit is set, this is an illegal instruction
@@ -171,7 +171,7 @@ always @(instruction) begin
 			endcase
 		end
 
-		instrOneHot[`O_H_AUPC]: begin
+		instrOneHot[`O_H_AUIPC]: begin
 			immed = {instruction[31:12], 12'd0};
 			aluop = `ALU_NONE;
 			bluop = `ALU_NONE;

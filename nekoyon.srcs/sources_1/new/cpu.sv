@@ -477,7 +477,7 @@ always @(posedge clock) begin
 				case (func3)
 					// ECALL/EBREAK
 					3'b000: begin
-						case (func12)
+						unique case (func12)
 							12'b0000000_00000: begin // ECALL
 								// OS service call
 								// eg: li a7, 93 -> terminate application
@@ -490,9 +490,9 @@ always @(posedge clock) begin
 								// Will put this hart into wait-for-interrupts mode
 								wfi <= 1'b1;
 							end
-							12'b0001001_?????: begin // SFENCE.VMA
+							/*12'b0001001_xxxxx: begin // SFENCE.VMA
 								// NOT IMPLEMENTED
-							end
+							end*/
 							// privileged instructions
 							12'b0011000_00010: begin // MRET
 								// MACHINE MODE
@@ -505,12 +505,12 @@ always @(posedge clock) begin
 								CSRReg[`CSR_MSTATUS][7] <= 1'b0;					// Clear MPIE (machine previous interrupt enable)
 								nextPC <= mepc;
 							end
-							12'b0001000_00010: begin // SRET
+							/*12'b0001000_00010: begin // SRET
 								// SUPERVISOR MODE NOT IMPLEMENTED
-							end
-							12'b0000000_00010: begin // URET
+							end*/
+							/*12'b0000000_00010: begin // URET
 								// USER MORE NOT IMPLEMENTED
-							end
+							end*/
 						endcase
 						cpumode[CPU_RETIRE] <= 1'b1;
 					end
@@ -674,7 +674,7 @@ always @(posedge clock) begin
 					cpumode[CPU_RETIRE] <= 1'b1;
 
 				case (1'b1)
-					instrOneHot[`O_H_AUPC]: begin
+					instrOneHot[`O_H_AUIPC]: begin
 						rwe <= 1'b1;
 						rdin <= immpc;
 					end

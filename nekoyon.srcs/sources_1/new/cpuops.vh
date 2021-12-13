@@ -160,7 +160,7 @@
 `define O_H_JAL				12
 `define O_H_JALR			11
 `define O_H_BRANCH			10
-`define O_H_AUPC			9
+`define O_H_AUIPC			9
 `define O_H_FENCE			8
 `define O_H_SYSTEM			7
 `define O_H_FLOAT_OP		6
@@ -180,7 +180,7 @@
 `define OPCODE_JAL		    5'b11011 //11
 `define OPCODE_JALR		    5'b11001 //11
 `define OPCODE_BRANCH	    5'b11000 //11
-`define OPCODE_AUPC		    5'b00101 //11
+`define OPCODE_AUIPC	    5'b00101 //11
 `define OPCODE_FENCE	    5'b00011 //11
 `define OPCODE_SYSTEM	    5'b11100 //11
 `define OPCODE_FLOAT_OP     5'b10100 //11
@@ -190,7 +190,7 @@
 `define OPCODE_FLOAT_MSUB   5'b10001 //11 
 `define OPCODE_FLOAT_NMSUB  5'b10010 //11 
 `define OPCODE_FLOAT_NMADD  5'b10011 //11
-`define OPCODE_CUSTOM       5'b00010 //11 - Custom instruction
+`define OPCODE_CUSTOM       5'b00010 //11 // Custom instruction
 
 // ======================== SUBGROUPS ===========================
 `define F3_BEQ		3'b000
